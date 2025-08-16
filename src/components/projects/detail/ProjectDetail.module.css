@@ -1,0 +1,96 @@
+.container {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.left {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+
+.right {
+  min-height: 0;
+}
+
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+}
+
+.todoItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.todoInputRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dateTabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.dateTab {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  background: #f9fafb;
+}
+
+.dateTabActive {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
