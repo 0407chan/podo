@@ -6,6 +6,7 @@ export type Project = {
   name: string;
   description: string | null;
   status: string | null;
+  start_date: string | null;
   due_date: string | null;
   created_at: string;
   updated_at: string;
@@ -24,6 +25,7 @@ export async function listProjects(): Promise<Project[]> {
 export async function createProject(payload: {
   name: string;
   description?: string | null;
+  start_date?: string | null;
   due_date?: string | null;
 }): Promise<Project> {
   const { data, error } = await supabase
@@ -31,6 +33,7 @@ export async function createProject(payload: {
     .insert({
       name: payload.name,
       description: payload.description ?? null,
+      start_date: payload.start_date ?? null,
       due_date: payload.due_date ?? null,
     })
     .select("*")
