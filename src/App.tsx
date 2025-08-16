@@ -1,34 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { QueryProvider } from './providers/QueryProvider'
+import { SessionGate } from './providers/SessionGate.tsx'
+import { MainLayout } from './layouts/MainLayout'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { ProjectDetailPage } from './pages/ProjectDetailPage'
+import { ThemeProvider } from './providers/ThemeProvider'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <QueryProvider>
+      <SessionGate>
+        <ThemeProvider>
+          <BrowserRouter>
+            <MainLayout>
+              <Routes>
+                <Route path="/" element={<Navigate to="/projects" replace />} />
+                <Route path="/projects" element={<div style={{ color: '#6b7280' }}>프로젝트를 왼쪽에서 선택해줘</div>} />
+                <Route path="/projects/:id" element={<ProjectDetailPage />} />
+              </Routes>
+            </MainLayout>
+          </BrowserRouter>
+        </ThemeProvider>
+      </SessionGate>
+    </QueryProvider>
   )
 }
 
