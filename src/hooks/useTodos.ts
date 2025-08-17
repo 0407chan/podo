@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 
 export type Todo = {
@@ -139,6 +144,60 @@ export function useAssignTodoFeature() {
         queryKey: ["feature_linked_tasks", vars.project_id],
       });
     },
+  });
+}
+
+// ---- Infinite weekly loader grouped by date ----
+function formatDate(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function addDays(dateStr: string, delta: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + delta);
+  return formatDate(d);
+}
+
+export function useInfiniteTodosByWeek(projectId: string | undefined) {
+  type Page = { items: Todo[]; oldestDate: string | null };
+  return useInfiniteQuery<
+    Page,
+    Error,
+    Page,
+    (string | undefined)[],
+    string | undefined
+  >({
+    queryKey: ["todos_weekly", projectId],
+    queryFn: async ({ pageParam }: { pageParam?: string }): Promise<Page> => {
+      if (!projectId) return { items: [], oldestDate: null };
+      const endDate = pageParam
+        ? (pageParam as string)
+        : formatDate(new Date());
+      const startDate = addDays(endDate, -6);
+      const { data, error } = await supabase
+        .from("todos")
+        .select("*")
+        .eq("project_id", projectId)
+        .lte("date", endDate)
+        .gte("date", startDate)
+        .order("date", { ascending: false })
+        .order("order_index", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const items = (data ?? []) as Todo[];
+      const oldestDate = items.length
+        ? items.reduce((m, r) => (r.date < m ? r.date : m), items[0].date)
+        : null;
+      return { items, oldestDate } as Page;
+    },
+    getNextPageParam: (lastPage: Page) =>
+      lastPage.oldestDate ? addDays(lastPage.oldestDate, -1) : undefined,
+    initialPageParam: undefined,
+    enabled: !!projectId,
+    staleTime: 3000,
   });
 }
 
