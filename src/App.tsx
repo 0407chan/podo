@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import "./App.css";
 import { MainLayout } from "./layouts/MainLayout";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { QueryProvider } from "./providers/QueryProvider";
