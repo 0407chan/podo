@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DailyTodosPanel } from "../components/projects/detail/DailyTodosPanel";
 import { FeatureTodoList } from "../components/projects/detail/FeatureTodoList";
@@ -81,6 +81,64 @@ export function ProjectDetailPage() {
     }
   }, [weeklyTodos.data, selectedDate]);
 
+  // ---- Cross-panel focus & highlight for actual daily todo items ----
+  const todoElMapRef = useRef<Map<string, HTMLElement>>(new Map());
+  const registerTodoEl = useCallback(
+    (todoId: string, el: HTMLElement | null) => {
+      const map = todoElMapRef.current;
+      if (!el) {
+        map.delete(todoId);
+        return;
+      }
+      map.set(todoId, el);
+    },
+    []
+  );
+
+  const focusTodoById = useCallback(
+    async (todoId: string) => {
+      const tryHighlight = (el: HTMLElement) => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        // allow keyboard focus outline too
+        if (typeof el.focus === "function") {
+          el.focus({ preventScroll: true } as any);
+        }
+        // retrigger animation
+        el.classList.remove("flash-highlight");
+        // force reflow to restart CSS animation
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        (el as any).offsetWidth;
+        el.classList.add("flash-highlight");
+        // ensure cleanup after animation finishes (in case CSS changes)
+        const handle = window.setTimeout(() => {
+          el.classList.remove("flash-highlight");
+        }, 1300);
+        // best-effort: clear if re-triggered before timeout
+        (el as any)._fh_to && window.clearTimeout((el as any)._fh_to);
+        (el as any)._fh_to = handle;
+      };
+
+      let el: HTMLElement | undefined = todoElMapRef.current.get(todoId);
+      if (el) {
+        tryHighlight(el);
+        return;
+      }
+
+      // Not found in DOM: try to fetch older pages a few times
+      let attempts = 0;
+      const maxAttempts = 4;
+      while (!el && attempts < maxAttempts && weeklyTodos.hasNextPage) {
+        attempts += 1;
+        await weeklyTodos.fetchNextPage();
+        // wait a tick for DOM to render
+        await new Promise((r) => setTimeout(r, 0));
+        el = todoElMapRef.current.get(todoId);
+      }
+      if (el) tryHighlight(el);
+    },
+    [weeklyTodos]
+  );
+
   if (!id) return <div>No project selected</div>;
   if (!project) return <div>Loading project...</div>;
 
@@ -108,6 +166,9 @@ export function ProjectDetailPage() {
             onToggle={handleToggleFeature}
             progressByFeature={progressByFeature}
             linkedTodosByFeature={linkedTodosMap}
+            onJumpToTodo={(todoId) => {
+              void focusTodoById(todoId);
+            }}
             onQuickAddTodo={async (featureId: string, title: string) => {
               if (!projectId) return;
               const today = (() => {
@@ -140,6 +201,7 @@ export function ProjectDetailPage() {
               const pages = (weeklyTodos.data as any)?.pages ?? [];
               return pages.flatMap((p: any) => p.items) as any[];
             })()}
+            registerTodoEl={registerTodoEl}
             onCreate={async (date, title) => {
               if (!projectId) return;
               if (selectedDate !== date) setSelectedDate(date);

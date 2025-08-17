@@ -20,6 +20,7 @@ type Props = {
     { id: string; title: string; status: "todo" | "in_progress" | "done" }[]
   >;
   onQuickAddTodo?: (featureId: string, title: string) => void;
+  onJumpToTodo?: (todoId: string) => void;
 };
 
 export function FeatureTodoList({
@@ -30,6 +31,7 @@ export function FeatureTodoList({
   progressByFeature,
   linkedTodosByFeature,
   onQuickAddTodo,
+  onJumpToTodo,
 }: Props) {
   const [title, setTitle] = useState("");
   const [quickAddFor, setQuickAddFor] = useState<string | null>(null);
@@ -160,7 +162,14 @@ export function FeatureTodoList({
                     dataSource={linkedTodosByFeature[t.id]}
                     renderItem={(lt) => (
                       <List.Item style={{ paddingLeft: 24 }}>
-                        <Checkbox checked={lt.status === "done"}>
+                        <Checkbox
+                          checked={lt.status === "done"}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onJumpToTodo?.(lt.id);
+                          }}
+                        >
                           <Text
                             type="secondary"
                             style={{
