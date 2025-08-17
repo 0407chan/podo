@@ -42,3 +42,27 @@ export async function createProject(payload: {
   if (error) throw error;
   return data as Project;
 }
+
+export async function updateProject(payload: {
+  id: string;
+  name?: string;
+  start_date?: string | null;
+  due_date?: string | null;
+}): Promise<Project> {
+  const updates: Record<string, any> = {};
+  if (typeof payload.name !== "undefined") updates.name = payload.name;
+  if (typeof payload.start_date !== "undefined")
+    updates.start_date = payload.start_date;
+  if (typeof payload.due_date !== "undefined")
+    updates.due_date = payload.due_date;
+
+  const { data, error } = await supabase
+    .from("projects")
+    .update(updates)
+    .eq("id", payload.id)
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return data as Project;
+}
