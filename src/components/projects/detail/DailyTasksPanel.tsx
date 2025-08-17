@@ -68,15 +68,14 @@ export function DailyTasksPanel({
               top: 16,
               zIndex: 5,
               background: "#ffffff",
-              padding: "8px 12px",
+              padding: "8px 12px 12px 12px",
               borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 600,
+              borderBottom: "1px solid #f0f0f0",
             }}
           >
-            {formatLabel(date)}
-          </div>
-          <div style={{ padding: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+              {formatLabel(date)}
+            </div>
             <Input.Search
               placeholder={`${date} 할 일`}
               value={inputs[date] ?? ""}
@@ -91,7 +90,8 @@ export function DailyTasksPanel({
               }}
               enterButton="추가"
             />
-
+          </div>
+          <div style={{ padding: 12 }}>
             <List
               style={{ marginTop: 8 }}
               dataSource={items}
