@@ -26,9 +26,8 @@ export function ProjectDetailLayout({ left, right }: Props) {
           position: "sticky",
           top: 16,
           alignSelf: "flex-start",
-
-          height: "100%",
-          overflow: "auto",
+          height: "calc(100vh - 32px)",
+          overflow: "hidden",
         }}
       >
         {left}
