@@ -9,7 +9,6 @@ type Props = {
   onToggle: (taskId: string) => void;
   onAssign: (taskId: string, featureId: string | null) => void;
   features: FeatureTodo[];
-  fillHeight?: boolean;
 };
 
 function formatLabel(date: string): string {
@@ -30,7 +29,6 @@ export function DailyTasksPanel({
   onToggle,
   onAssign,
   features,
-  fillHeight,
 }: Props) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
 
@@ -49,34 +47,29 @@ export function DailyTasksPanel({
 
   return (
     <div
-      style={
-        fillHeight
-          ? {
-              height: "100%",
-              overflow: "auto",
-              display: "grid",
-              gap: 12,
-              gridAutoRows: "min-content",
-            }
-          : undefined
-      }
+      style={{
+        display: "grid",
+        gap: 12,
+        gridAutoRows: "min-content",
+      }}
     >
       {grouped.map(([date, items]) => (
         <div
           key={date}
           style={{
-            border: "1px solid var(--ant-color-border, #f0f0f0)",
+            border: "1px solid #e0e0e0",
             borderRadius: 8,
-            background: "var(--ant-color-bg-container, #fff)",
+            background: "#ffffff",
           }}
         >
           <div
             style={{
               position: "sticky",
-              top: 0,
+              top: 16,
               zIndex: 5,
-              background: "var(--ant-color-bg-container, #fff)",
+              background: "#ffffff",
               padding: "8px 12px",
+              borderRadius: 8,
               fontSize: 14,
               fontWeight: 600,
             }}

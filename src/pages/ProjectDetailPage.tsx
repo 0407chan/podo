@@ -106,7 +106,6 @@ export function ProjectDetailPage() {
             onToggle={handleToggleTodo}
             progressByFeature={progressByFeature}
             linkedTasksByFeature={linkedTasksMap}
-            fillHeight
           />
         </>
       }

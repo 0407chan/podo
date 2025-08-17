@@ -19,7 +19,6 @@ type Props = {
     string,
     { id: string; title: string; status: "todo" | "in_progress" | "done" }[]
   >;
-  fillHeight?: boolean;
 };
 
 export function FeatureTodoList({
@@ -29,7 +28,6 @@ export function FeatureTodoList({
   onToggle,
   progressByFeature,
   linkedTasksByFeature,
-  fillHeight,
 }: Props) {
   const [title, setTitle] = useState("");
 
@@ -39,7 +37,7 @@ export function FeatureTodoList({
     <Card title="Feature TODOs">
       <List
         dataSource={data}
-        style={fillHeight ? { flex: 1, overflow: "auto" } : undefined}
+        style={{ flex: 1, overflow: "auto" }}
         renderItem={(t) => {
           const prog = progressByFeature?.[t.id];
           const percent =
@@ -75,12 +73,22 @@ export function FeatureTodoList({
               {linkedTasksByFeature?.[t.id]?.length ? (
                 <List
                   size="small"
+                  split={false}
                   dataSource={linkedTasksByFeature[t.id]}
                   renderItem={(lt) => (
                     <List.Item style={{ paddingLeft: 24 }}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        - {lt.title} {lt.status === "done" ? "(완료)" : ""}
-                      </Text>
+                      <Checkbox checked={lt.status === "done"}>
+                        <Text
+                          type="secondary"
+                          style={{
+                            fontSize: 12,
+                            textDecoration:
+                              lt.status === "done" ? "line-through" : "none",
+                          }}
+                        >
+                          {lt.title}
+                        </Text>
+                      </Checkbox>
                     </List.Item>
                   )}
                 />

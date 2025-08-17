@@ -11,8 +11,10 @@ export function ProjectDetailLayout({ left, right }: Props) {
       style={{
         display: "flex",
         gap: 16,
+        padding: 16,
         alignItems: "start",
         justifyContent: "start",
+        background: "#FAFAFB",
       }}
     >
       <div
@@ -22,9 +24,11 @@ export function ProjectDetailLayout({ left, right }: Props) {
           flexDirection: "column",
           gap: 12,
           position: "sticky",
-          top: 0,
+          top: 16,
           alignSelf: "flex-start",
-          height: "calc(100vh - 48px)",
+
+          height: "100%",
+          overflow: "auto",
         }}
       >
         {left}
