@@ -14,6 +14,7 @@ import { useProjects } from "../hooks/useProjects";
 import {
   useAssignTodoFeature,
   useCreateTodo,
+  useDeleteTodo,
   useFeatureLinkedTasks,
   useFeatureProgress,
   useInfiniteTodosByWeek,
@@ -36,6 +37,7 @@ export function ProjectDetailPage() {
   const { mutateAsync: createTask } = useCreateTodo();
   const { mutateAsync: toggleTask } = useToggleTodoStatus();
   const { mutateAsync: assignTaskFeature } = useAssignTodoFeature();
+  const { mutateAsync: deleteTask } = useDeleteTodo();
 
   const { data: progress = [] } = useFeatureProgress(projectId);
   const { data: linkedTasksMap = {} } = useFeatureLinkedTasks(projectId);
@@ -163,6 +165,14 @@ export function ProjectDetailPage() {
                 date,
                 feature_id: featureId,
               });
+            }}
+            onDelete={async (taskId) => {
+              if (!projectId || !selectedDate) return;
+              const pages = (weekly.data as any)?.pages ?? [];
+              const all = pages.flatMap((p: any) => p.items) as any[];
+              const cur = all.find((t) => t.id === taskId);
+              const date = cur?.date ?? selectedDate;
+              await deleteTask({ id: taskId, project_id: projectId, date });
             }}
             features={todos}
           />

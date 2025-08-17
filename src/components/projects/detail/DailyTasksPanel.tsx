@@ -1,5 +1,6 @@
 import type { Todo } from "@/hooks/useTodos";
-import { Checkbox, Input, List, Select } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Input, List, Popconfirm, Select, Tag } from "antd";
 import { useMemo, useState } from "react";
 import type { FeatureTodo } from "./FeatureTodoList";
 
@@ -8,6 +9,7 @@ type Props = {
   onCreate: (date: string, title: string) => void;
   onToggle: (taskId: string) => void;
   onAssign: (taskId: string, featureId: string | null) => void;
+  onDelete: (taskId: string) => void;
   features: FeatureTodo[];
 };
 
@@ -28,9 +30,11 @@ export function DailyTasksPanel({
   onCreate,
   onToggle,
   onAssign,
+  onDelete,
   features,
 }: Props) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [assignFor, setAssignFor] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Todo[]>();
@@ -100,7 +104,7 @@ export function DailyTasksPanel({
                 <List.Item
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "auto 1fr minmax(160px, 220px)",
+                    gridTemplateColumns: "auto 1fr minmax(120px, 160px) auto",
                     gap: 8,
                     alignItems: "center",
                   }}
@@ -117,17 +121,54 @@ export function DailyTasksPanel({
                   >
                     {t.title}
                   </div>
-                  <Select
-                    value={t.feature_id ?? undefined}
-                    onChange={(val) => onAssign(t.id, (val as string) || null)}
-                    allowClear
-                    placeholder="연결 안 함"
-                    style={{ width: "100%" }}
-                    options={features.map((f) => ({
-                      value: f.id,
-                      label: f.title,
-                    }))}
-                  />
+                  {assignFor === t.id ? (
+                    <Select
+                      size="small"
+                      value={t.feature_id ?? undefined}
+                      onChange={(val) => {
+                        onAssign(t.id, (val as string) || null);
+                        setAssignFor(null);
+                      }}
+                      allowClear
+                      showSearch
+                      placeholder="연결 안 함"
+                      style={{ width: 140 }}
+                      dropdownMatchSelectWidth={false}
+                      options={features.map((f) => ({
+                        value: f.id,
+                        label: f.title,
+                      }))}
+                      onBlur={() => setAssignFor(null)}
+                    />
+                  ) : (
+                    <Tag
+                      onClick={() => setAssignFor(t.id)}
+                      style={{ cursor: "pointer", width: "fit-content" }}
+                      color={t.feature_id ? "blue" : undefined}
+                    >
+                      {t.feature_id
+                        ? features.find((f) => f.id === t.feature_id)?.title ||
+                          "연결됨"
+                        : "연결 안 함"}
+                    </Tag>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <Popconfirm
+                      title="삭제하시겠습니까?"
+                      okText="삭제"
+                      cancelText="취소"
+                      okButtonProps={{ danger: true }}
+                      placement="topRight"
+                      onConfirm={() => onDelete(t.id)}
+                    >
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                      />
+                    </Popconfirm>
+                  </div>
                 </List.Item>
               )}
             />

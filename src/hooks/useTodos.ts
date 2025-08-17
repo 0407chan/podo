@@ -120,6 +120,7 @@ export function useToggleTodoStatus() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["todos", vars.project_id, vars.date] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
         queryKey: ["feature_linked_tasks", vars.project_id],
@@ -146,6 +147,34 @@ export function useAssignTodoFeature() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["todos", vars.project_id, vars.date] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
+      qc.invalidateQueries({
+        queryKey: ["feature_linked_tasks", vars.project_id],
+      });
+    },
+  });
+}
+
+export function useDeleteTodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      project_id: string;
+      date: string;
+    }) => {
+      const { error } = await supabase
+        .from("todos")
+        .delete()
+        .eq("id", payload.id);
+      if (error) throw error;
+      return true as const;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["todos", vars.project_id, vars.date] });
+      qc.invalidateQueries({ queryKey: ["todo_dates", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
         queryKey: ["feature_linked_tasks", vars.project_id],

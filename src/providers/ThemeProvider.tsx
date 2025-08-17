@@ -7,6 +7,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         algorithm: theme.defaultAlgorithm,
         token: {},
       }}
+      tag={{
+        style: { marginRight: 0 },
+      }}
     >
       {children}
     </ConfigProvider>
