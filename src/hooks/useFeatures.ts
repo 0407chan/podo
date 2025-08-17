@@ -68,3 +68,35 @@ export function useToggleFeature() {
     },
   });
 }
+
+export function useDeleteFeature() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { id: string; project_id: string }) => {
+      // 1) Unlink todos from this feature (set feature_id to null)
+      const { error: unlinkErr } = await supabase
+        .from("todos")
+        .update({ feature_id: null })
+        .eq("project_id", payload.project_id)
+        .eq("feature_id", payload.id);
+      if (unlinkErr) throw unlinkErr;
+
+      // 2) Delete feature itself
+      const { error: delErr } = await supabase
+        .from("features")
+        .delete()
+        .eq("id", payload.id)
+        .eq("project_id", payload.project_id);
+      if (delErr) throw delErr;
+      return true as const;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["features", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
+      qc.invalidateQueries({
+        queryKey: ["feature_linked_todos", vars.project_id],
+      });
+    },
+  });
+}

@@ -7,6 +7,7 @@ import { ProjectInfoCard } from "../components/projects/detail/ProjectInfoCard";
 // useDailies 제거 → 날짜는 todos에서 distinct로 사용
 import {
   useCreateFeature,
+  useDeleteFeature,
   useFeatures,
   useToggleFeature,
 } from "../hooks/useFeatures";
@@ -30,6 +31,7 @@ export function ProjectDetailPage() {
   const { data: features = [] } = useFeatures(projectId);
   const { mutateAsync: createFeature } = useCreateFeature();
   const { mutateAsync: toggleFeature } = useToggleFeature();
+  const { mutateAsync: deleteFeature } = useDeleteFeature();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   // 주간 단위 무한 스크롤 로딩
@@ -184,6 +186,10 @@ export function ProjectDetailPage() {
                 title,
                 feature_id: featureId,
               });
+            }}
+            onDelete={async (featureId) => {
+              if (!projectId) return;
+              await deleteFeature({ id: featureId, project_id: projectId });
             }}
           />
         </>

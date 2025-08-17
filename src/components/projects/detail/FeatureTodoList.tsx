@@ -1,4 +1,5 @@
-import { Checkbox, Input, List, Progress, Typography } from "antd";
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { Checkbox, Input, List, Popconfirm, Progress, Typography } from "antd";
 import { useMemo, useState } from "react";
 const { Text } = Typography;
 
@@ -21,6 +22,7 @@ type Props = {
   >;
   onQuickAddTodo?: (featureId: string, title: string) => void;
   onJumpToTodo?: (todoId: string) => void;
+  onDelete?: (id: string) => void;
 };
 
 export function FeatureTodoList({
@@ -32,6 +34,7 @@ export function FeatureTodoList({
   linkedTodosByFeature,
   onQuickAddTodo,
   onJumpToTodo,
+  onDelete,
 }: Props) {
   const [title, setTitle] = useState("");
   const [quickAddFor, setQuickAddFor] = useState<string | null>(null);
@@ -117,8 +120,36 @@ export function FeatureTodoList({
                       }}
                       title="오늘 TODO 추가"
                     >
-                      +
+                      <PlusOutlined />
                     </button>
+                    <Popconfirm
+                      title="이 feature를 삭제할까?"
+                      description={`연결된 오늘 할 일은 링크만 해제돼요.`}
+                      okText="삭제"
+                      cancelText="취소"
+                      placement="left"
+                      onConfirm={() => {
+                        setQuickAddFor(null);
+                        onDelete?.(t.id);
+                      }}
+                    >
+                      <button
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                          color: "var(--ant-color-error, #ff4d4f)",
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                        }}
+                        title="Feature 삭제"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <DeleteOutlined />
+                      </button>
+                    </Popconfirm>
                     {prog && (
                       <Text
                         type="secondary"
