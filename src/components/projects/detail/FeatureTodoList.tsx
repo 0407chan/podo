@@ -96,7 +96,7 @@ export function FeatureTodoList({
                   }}
                 >
                   <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    style={{ display: "flex", alignItems: "center", gap: 4 }}
                   >
                     <Checkbox
                       checked={t.status === "done"}
@@ -104,9 +104,19 @@ export function FeatureTodoList({
                     >
                       <Text delete={t.status === "done"}>{t.title}</Text>
                     </Checkbox>
+                    {prog ? (
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 12, marginRight: "auto" }}
+                      >
+                        {prog.done}/{prog.total}
+                      </Text>
+                    ) : (
+                      <div style={{ marginRight: "auto" }} />
+                    )}
+
                     <button
                       style={{
-                        marginLeft: 4,
                         border: "none",
                         background: "transparent",
                         cursor: "pointer",
@@ -150,14 +160,6 @@ export function FeatureTodoList({
                         <DeleteOutlined />
                       </button>
                     </Popconfirm>
-                    {prog && (
-                      <Text
-                        type="secondary"
-                        style={{ marginLeft: "auto", fontSize: 12 }}
-                      >
-                        {prog.done}/{prog.total}
-                      </Text>
-                    )}
                   </div>
                   {quickAddFor === t.id && (
                     <div style={{ marginTop: 8 }}>
@@ -178,12 +180,7 @@ export function FeatureTodoList({
                     </div>
                   )}
                   {prog && prog.total > 0 && (
-                    <Progress
-                      percent={percent}
-                      size="small"
-                      showInfo={false}
-                      style={{ marginTop: 6 }}
-                    />
+                    <Progress percent={percent} size="small" showInfo={false} />
                   )}
                 </div>
                 {linkedTodosByFeature?.[t.id]?.length ? (

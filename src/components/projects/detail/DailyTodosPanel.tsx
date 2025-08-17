@@ -97,9 +97,8 @@ export function DailyTodosPanel({
               enterButton="추가"
             />
           </div>
-          <div style={{ padding: 12 }}>
+          <div style={{ padding: "0 12px" }}>
             <List
-              style={{ marginTop: 8 }}
               dataSource={items}
               locale={{ emptyText: "오늘 할 일이 없어" }}
               renderItem={(t) => (
