@@ -6,7 +6,7 @@ export type FeatureTodo = {
   id: string;
   project_id: string;
   title: string;
-  status: "todo" | "in_progress" | "done";
+  status: "todo" | "done";
 };
 
 type Props = {
@@ -19,24 +19,39 @@ type Props = {
     string,
     { id: string; title: string; status: "todo" | "in_progress" | "done" }[]
   >;
+  fillHeight?: boolean;
 };
 
 export function FeatureTodoList({
-  projectId,
+  projectId: _projectId,
   todos,
   onCreate,
   onToggle,
   progressByFeature,
   linkedTasksByFeature,
+  fillHeight,
 }: Props) {
   const [title, setTitle] = useState("");
 
   const data = useMemo(() => todos, [todos]);
 
   return (
-    <Card title="Feature TODOs">
+    <Card
+      title="Feature TODOs"
+      style={fillHeight ? { height: "100%" } : undefined}
+      styles={{
+        body: fillHeight
+          ? {
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }
+          : undefined,
+      }}
+    >
       <List
         dataSource={data}
+        style={fillHeight ? { flex: 1, overflow: "auto" } : undefined}
         renderItem={(t) => {
           const prog = progressByFeature?.[t.id];
           const percent =
