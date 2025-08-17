@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DailyTasksPanel } from "../components/projects/detail/DailyTasksPanel";
+import { DailyTodosPanel } from "../components/projects/detail/DailyTodosPanel";
 import { FeatureTodoList } from "../components/projects/detail/FeatureTodoList";
 import { ProjectDetailLayout } from "../components/projects/detail/ProjectDetailLayout";
 import { ProjectInfoCard } from "../components/projects/detail/ProjectInfoCard";
@@ -15,7 +15,7 @@ import {
   useAssignTodoFeature,
   useCreateTodo,
   useDeleteTodo,
-  useFeatureLinkedTasks,
+  useFeatureLinkedTodos,
   useFeatureProgress,
   useInfiniteTodosByWeek,
   useToggleTodoStatus,
@@ -27,20 +27,20 @@ export function ProjectDetailPage() {
   const project = (data ?? []).find((p) => p.id === id);
   const projectId = project?.id;
 
-  const { data: todos = [] } = useFeatures(projectId);
-  const { mutateAsync: createTodo } = useCreateFeature();
-  const { mutateAsync: toggleTodo } = useToggleFeature();
+  const { data: features = [] } = useFeatures(projectId);
+  const { mutateAsync: createFeature } = useCreateFeature();
+  const { mutateAsync: toggleFeature } = useToggleFeature();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   // 주간 단위 무한 스크롤 로딩
-  const weekly = useInfiniteTodosByWeek(projectId);
-  const { mutateAsync: createTask } = useCreateTodo();
-  const { mutateAsync: toggleTask } = useToggleTodoStatus();
-  const { mutateAsync: assignTaskFeature } = useAssignTodoFeature();
-  const { mutateAsync: deleteTask } = useDeleteTodo();
+  const weeklyTodos = useInfiniteTodosByWeek(projectId);
+  const { mutateAsync: createTodo } = useCreateTodo();
+  const { mutateAsync: toggleTodo } = useToggleTodoStatus();
+  const { mutateAsync: assignTodoFeature } = useAssignTodoFeature();
+  const { mutateAsync: deleteTodo } = useDeleteTodo();
 
   const { data: progress = [] } = useFeatureProgress(projectId);
-  const { data: linkedTasksMap = {} } = useFeatureLinkedTasks(projectId);
+  const { data: linkedTodosMap = {} } = useFeatureLinkedTodos(projectId);
   const progressByFeature = useMemo(() => {
     const map: Record<string, { total: number; done: number }> = {};
     for (const p of progress)
@@ -49,8 +49,8 @@ export function ProjectDetailPage() {
   }, [progress]);
 
   useEffect(() => {
-    console.log(weekly.data, selectedDate);
-  }, [weekly.data, selectedDate]);
+    console.log(weeklyTodos.data, selectedDate);
+  }, [weeklyTodos.data, selectedDate]);
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -61,37 +61,37 @@ export function ProjectDetailPage() {
         const entry = entries[0];
         if (
           entry.isIntersecting &&
-          weekly.hasNextPage &&
-          !weekly.isFetchingNextPage
+          weeklyTodos.hasNextPage &&
+          !weeklyTodos.isFetchingNextPage
         ) {
-          weekly.fetchNextPage();
+          weeklyTodos.fetchNextPage();
         }
       },
       { root: null, rootMargin: "600px 0px 0px 0px" }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [weekly.hasNextPage, weekly.isFetchingNextPage]);
+  }, [weeklyTodos.hasNextPage, weeklyTodos.isFetchingNextPage]);
 
   useEffect(() => {
     if (!selectedDate) {
-      const pages = (weekly.data as any)?.pages ?? [];
+      const pages = (weeklyTodos.data as any)?.pages ?? [];
       const first = (pages?.[0]?.items ?? []).at(0)?.date as string | undefined;
       if (first) setSelectedDate(first);
     }
-  }, [weekly.data, selectedDate]);
+  }, [weeklyTodos.data, selectedDate]);
 
   if (!id) return <div>No project selected</div>;
   if (!project) return <div>Loading project...</div>;
 
-  const handleCreateTodo = async (title: string) => {
+  const handleCreateFeature = async (title: string) => {
     if (!projectId) return;
-    await createTodo({ project_id: projectId, title });
+    await createFeature({ project_id: projectId, title });
   };
 
-  const handleToggleTodo = async (todoId: string) => {
+  const handleToggleFeature = async (todoId: string) => {
     if (!projectId) return;
-    await toggleTodo({ id: todoId, project_id: projectId });
+    await toggleFeature({ id: todoId, project_id: projectId });
   };
 
   // Daily Editor 제거됨(카드 삭제). 위 핸들러들은 현재 미사용이라 정리
@@ -103,12 +103,12 @@ export function ProjectDetailPage() {
           <ProjectInfoCard project={project} />
           <FeatureTodoList
             projectId={project.id}
-            todos={todos}
-            onCreate={handleCreateTodo}
-            onToggle={handleToggleTodo}
+            features={features}
+            onCreate={handleCreateFeature}
+            onToggle={handleToggleFeature}
             progressByFeature={progressByFeature}
-            linkedTasksByFeature={linkedTasksMap}
-            onQuickAddTask={async (featureId, title) => {
+            linkedTodosByFeature={linkedTodosMap}
+            onQuickAddTodo={async (featureId: string, title: string) => {
               if (!projectId) return;
               const today = (() => {
                 const d = new Date();
@@ -117,7 +117,7 @@ export function ProjectDetailPage() {
                 const dd = String(d.getDate()).padStart(2, "0");
                 return `${yyyy}-${mm}-${dd}`;
               })();
-              await createTask({
+              await createTodo({
                 project_id: projectId,
                 date: today,
                 title,
@@ -135,46 +135,46 @@ export function ProjectDetailPage() {
             gridAutoRows: "min-content",
           }}
         >
-          <DailyTasksPanel
-            tasks={(() => {
-              const pages = (weekly.data as any)?.pages ?? [];
+          <DailyTodosPanel
+            todos={(() => {
+              const pages = (weeklyTodos.data as any)?.pages ?? [];
               return pages.flatMap((p: any) => p.items) as any[];
             })()}
             onCreate={async (date, title) => {
               if (!projectId) return;
               if (selectedDate !== date) setSelectedDate(date);
-              await createTask({ project_id: projectId, date, title });
+              await createTodo({ project_id: projectId, date, title });
             }}
-            onToggle={async (taskId) => {
+            onToggle={async (todoId) => {
               if (!projectId || !selectedDate) return;
-              const pages = (weekly.data as any)?.pages ?? [];
+              const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
-              const cur = all.find((t) => t.id === taskId);
+              const cur = all.find((t) => t.id === todoId);
               const date = cur?.date ?? selectedDate;
-              await toggleTask({ id: taskId, project_id: projectId, date });
+              await toggleTodo({ id: todoId, project_id: projectId, date });
             }}
-            onAssign={async (taskId, featureId) => {
+            onAssign={async (todoId, featureId) => {
               if (!projectId || !selectedDate) return;
-              const pages = (weekly.data as any)?.pages ?? [];
+              const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
-              const cur = all.find((t) => t.id === taskId);
+              const cur = all.find((t) => t.id === todoId);
               const date = cur?.date ?? selectedDate;
-              await assignTaskFeature({
-                id: taskId,
+              await assignTodoFeature({
+                id: todoId,
                 project_id: projectId,
                 date,
                 feature_id: featureId,
               });
             }}
-            onDelete={async (taskId) => {
+            onDelete={async (todoId) => {
               if (!projectId || !selectedDate) return;
-              const pages = (weekly.data as any)?.pages ?? [];
+              const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
-              const cur = all.find((t) => t.id === taskId);
+              const cur = all.find((t) => t.id === todoId);
               const date = cur?.date ?? selectedDate;
-              await deleteTask({ id: taskId, project_id: projectId, date });
+              await deleteTodo({ id: todoId, project_id: projectId, date });
             }}
-            features={todos}
+            features={features}
           />
           <div ref={loadMoreRef} />
         </div>

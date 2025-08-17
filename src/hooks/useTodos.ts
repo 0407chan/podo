@@ -90,7 +90,7 @@ export function useCreateTodo() {
       qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
-        queryKey: ["feature_linked_tasks", vars.project_id],
+        queryKey: ["feature_linked_todos", vars.project_id],
       });
     },
   });
@@ -123,7 +123,7 @@ export function useToggleTodoStatus() {
       qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
-        queryKey: ["feature_linked_tasks", vars.project_id],
+        queryKey: ["feature_linked_todos", vars.project_id],
       });
     },
   });
@@ -150,7 +150,7 @@ export function useAssignTodoFeature() {
       qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
-        queryKey: ["feature_linked_tasks", vars.project_id],
+        queryKey: ["feature_linked_todos", vars.project_id],
       });
     },
   });
@@ -177,7 +177,7 @@ export function useDeleteTodo() {
       qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
-        queryKey: ["feature_linked_tasks", vars.project_id],
+        queryKey: ["feature_linked_todos", vars.project_id],
       });
     },
   });
@@ -274,25 +274,26 @@ export function useFeatureProgress(projectId: string | undefined) {
   });
 }
 
-export type FeatureLinkedTask = {
+export type FeatureLinkedTodo = {
   id: string;
   feature_id: string;
   title: string;
   status: "todo" | "done";
 };
 
-export function useFeatureLinkedTasks(projectId: string | undefined) {
-  return useQuery<Record<string, FeatureLinkedTask[]>>({
-    queryKey: ["feature_linked_tasks", projectId],
+export function useFeatureLinkedTodos(projectId: string | undefined) {
+  return useQuery<Record<string, FeatureLinkedTodo[]>>({
+    queryKey: ["feature_linked_todos", projectId],
     queryFn: async () => {
       if (!projectId) return {};
       const { data, error } = await supabase
         .from("todos")
         .select("id, feature_id, title, status")
         .eq("project_id", projectId)
-        .not("feature_id", "is", null);
+        .not("feature_id", "is", null)
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      const map: Record<string, FeatureLinkedTask[]> = {};
+      const map: Record<string, FeatureLinkedTodo[]> = {};
       for (const row of (data ?? []) as any[]) {
         const fid = row.feature_id as string;
         (map[fid] ??= []).push({

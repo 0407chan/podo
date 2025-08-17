@@ -5,11 +5,11 @@ import { useMemo, useState } from "react";
 import type { FeatureTodo } from "./FeatureTodoList";
 
 type Props = {
-  tasks: Todo[];
+  todos: Todo[];
   onCreate: (date: string, title: string) => void;
-  onToggle: (taskId: string) => void;
-  onAssign: (taskId: string, featureId: string | null) => void;
-  onDelete: (taskId: string) => void;
+  onToggle: (todoId: string) => void;
+  onAssign: (todoId: string, featureId: string | null) => void;
+  onDelete: (todoId: string) => void;
   features: FeatureTodo[];
 };
 
@@ -25,8 +25,8 @@ function formatLabel(date: string): string {
   return date === todayStr ? `${label} 오늘` : label;
 }
 
-export function DailyTasksPanel({
-  tasks,
+export function DailyTodosPanel({
+  todos,
   onCreate,
   onToggle,
   onAssign,
@@ -38,7 +38,7 @@ export function DailyTasksPanel({
 
   const grouped = useMemo(() => {
     const map = new Map<string, Todo[]>();
-    for (const t of tasks) {
+    for (const t of todos) {
       const arr = map.get(t.date) ?? [];
       arr.push(t);
       map.set(t.date, arr);
@@ -47,7 +47,7 @@ export function DailyTasksPanel({
       a > b ? -1 : a < b ? 1 : 0
     );
     return entries;
-  }, [tasks]);
+  }, [todos]);
 
   return (
     <div

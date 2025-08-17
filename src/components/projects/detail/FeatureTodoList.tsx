@@ -11,31 +11,31 @@ export type FeatureTodo = {
 
 type Props = {
   projectId: string;
-  todos: FeatureTodo[];
+  features: FeatureTodo[];
   onCreate: (title: string) => void;
   onToggle: (id: string) => void;
   progressByFeature?: Record<string, { total: number; done: number }>;
-  linkedTasksByFeature?: Record<
+  linkedTodosByFeature?: Record<
     string,
     { id: string; title: string; status: "todo" | "in_progress" | "done" }[]
   >;
-  onQuickAddTask?: (featureId: string, title: string) => void;
+  onQuickAddTodo?: (featureId: string, title: string) => void;
 };
 
 export function FeatureTodoList({
   projectId: _projectId,
-  todos,
+  features,
   onCreate,
   onToggle,
   progressByFeature,
-  linkedTasksByFeature,
-  onQuickAddTask,
+  linkedTodosByFeature,
+  onQuickAddTodo,
 }: Props) {
   const [title, setTitle] = useState("");
   const [quickAddFor, setQuickAddFor] = useState<string | null>(null);
   const [quickTitle, setQuickTitle] = useState<string>("");
 
-  const data = useMemo(() => todos, [todos]);
+  const data = useMemo(() => features, [features]);
 
   return (
     <div
@@ -135,7 +135,7 @@ export function FeatureTodoList({
                         onSearch={(val) => {
                           const v = val.trim();
                           if (!v) return;
-                          onQuickAddTask?.(t.id, v);
+                          onQuickAddTodo?.(t.id, v);
                           setQuickTitle("");
                           setQuickAddFor(null);
                         }}
@@ -153,11 +153,11 @@ export function FeatureTodoList({
                     />
                   )}
                 </div>
-                {linkedTasksByFeature?.[t.id]?.length ? (
+                {linkedTodosByFeature?.[t.id]?.length ? (
                   <List
                     size="small"
                     split={false}
-                    dataSource={linkedTasksByFeature[t.id]}
+                    dataSource={linkedTodosByFeature[t.id]}
                     renderItem={(lt) => (
                       <List.Item style={{ paddingLeft: 24 }}>
                         <Checkbox checked={lt.status === "done"}>
