@@ -19,7 +19,7 @@ export function useFeatures(projectId: string | undefined) {
         .from("features")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Feature[];
     },
