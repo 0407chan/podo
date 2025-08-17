@@ -19,6 +19,7 @@ type Props = {
     string,
     { id: string; title: string; status: "todo" | "in_progress" | "done" }[]
   >;
+  onQuickAddTask?: (featureId: string, title: string) => void;
 };
 
 export function FeatureTodoList({
@@ -28,8 +29,11 @@ export function FeatureTodoList({
   onToggle,
   progressByFeature,
   linkedTasksByFeature,
+  onQuickAddTask,
 }: Props) {
   const [title, setTitle] = useState("");
+  const [quickAddFor, setQuickAddFor] = useState<string | null>(null);
+  const [quickTitle, setQuickTitle] = useState<string>("");
 
   const data = useMemo(() => todos, [todos]);
 
@@ -95,6 +99,24 @@ export function FeatureTodoList({
                     >
                       <Text delete={t.status === "done"}>{t.title}</Text>
                     </Checkbox>
+                    <button
+                      style={{
+                        marginLeft: 4,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        color: "var(--ant-color-primary, #1677ff)",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                      }}
+                      onClick={() => {
+                        setQuickAddFor((prev) => (prev === t.id ? null : t.id));
+                        setQuickTitle("");
+                      }}
+                      title="오늘 TODO 추가"
+                    >
+                      +
+                    </button>
                     {prog && (
                       <Text
                         type="secondary"
@@ -104,6 +126,24 @@ export function FeatureTodoList({
                       </Text>
                     )}
                   </div>
+                  {quickAddFor === t.id && (
+                    <div style={{ marginTop: 8 }}>
+                      <Input.Search
+                        placeholder="오늘 할 일"
+                        value={quickTitle}
+                        onChange={(e) => setQuickTitle(e.target.value)}
+                        onSearch={(val) => {
+                          const v = val.trim();
+                          if (!v) return;
+                          onQuickAddTask?.(t.id, v);
+                          setQuickTitle("");
+                          setQuickAddFor(null);
+                        }}
+                        enterButton="추가"
+                        autoFocus
+                      />
+                    </div>
+                  )}
                   {prog && prog.total > 0 && (
                     <Progress
                       percent={percent}

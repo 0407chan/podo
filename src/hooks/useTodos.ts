@@ -69,6 +69,7 @@ export function useCreateTodo() {
       project_id: string;
       date: string;
       title: string;
+      feature_id?: string | null;
     }) => {
       const { data, error } = await supabase
         .from("todos")
@@ -76,6 +77,7 @@ export function useCreateTodo() {
           project_id: payload.project_id,
           date: payload.date,
           title: payload.title,
+          feature_id: payload.feature_id ?? null,
         })
         .select("*")
         .single();
@@ -85,6 +87,11 @@ export function useCreateTodo() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["todos", vars.project_id, vars.date] });
       qc.invalidateQueries({ queryKey: ["todo_dates", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
+      qc.invalidateQueries({
+        queryKey: ["feature_linked_tasks", vars.project_id],
+      });
     },
   });
 }

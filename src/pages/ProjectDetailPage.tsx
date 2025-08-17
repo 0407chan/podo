@@ -106,6 +106,22 @@ export function ProjectDetailPage() {
             onToggle={handleToggleTodo}
             progressByFeature={progressByFeature}
             linkedTasksByFeature={linkedTasksMap}
+            onQuickAddTask={async (featureId, title) => {
+              if (!projectId) return;
+              const today = (() => {
+                const d = new Date();
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, "0");
+                const dd = String(d.getDate()).padStart(2, "0");
+                return `${yyyy}-${mm}-${dd}`;
+              })();
+              await createTask({
+                project_id: projectId,
+                date: today,
+                title,
+                feature_id: featureId,
+              });
+            }}
           />
         </>
       }
