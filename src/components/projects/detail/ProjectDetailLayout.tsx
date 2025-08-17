@@ -1,4 +1,3 @@
-import { Col, Row } from "antd";
 import type { ReactNode } from "react";
 
 type Props = {
@@ -8,23 +7,33 @@ type Props = {
 
 export function ProjectDetailLayout({ left, right }: Props) {
   return (
-    <Row
-      gutter={16}
-      wrap={false}
-      style={{ height: "calc(100vh - 48px)", overflow: "hidden" }}
+    <div
+      style={{
+        display: "flex",
+        gap: 16,
+        alignItems: "start",
+        justifyContent: "start",
+      }}
     >
-      <Col
-        flex="340px"
-        style={{ display: "grid", gap: 12, height: "100%", overflow: "hidden" }}
+      <div
+        style={{
+          width: 340,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          position: "sticky",
+          top: 0,
+          alignSelf: "flex-start",
+          height: "calc(100vh - 48px)",
+        }}
       >
         {left}
-      </Col>
-      <Col
-        flex="auto"
-        style={{ display: "grid", gap: 12, height: "100%", overflow: "hidden" }}
+      </div>
+      <div
+        style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}
       >
         {right}
-      </Col>
-    </Row>
+      </div>
+    </div>
   );
 }

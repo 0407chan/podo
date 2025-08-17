@@ -8,16 +8,7 @@ type Props = {
 
 export function ProjectInfoCard({ project }: Props) {
   return (
-    <Card
-      style={{ height: "100%" }}
-      styles={{
-        body: {
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
+    <Card>
       <div
         style={{
           display: "flex",
