@@ -1,3 +1,5 @@
+import { useSettingsStore } from "@/stores/useSettingsStore";
+import type { Priority } from "@/types/literal";
 import {
   DeleteOutlined,
   EyeInvisibleOutlined,
@@ -21,6 +23,7 @@ export type FeatureTodo = {
   project_id: string;
   title: string;
   status: "todo" | "done";
+  priority?: "highest" | "high" | "normal" | "low" | "lowest";
 };
 
 type Props = {
@@ -28,10 +31,16 @@ type Props = {
   features: FeatureTodo[];
   onCreate: (title: string) => void;
   onToggle: (id: string) => void;
+  onChangePriority?: (id: string, priority: FeatureTodo["priority"]) => void;
   progressByFeature?: Record<string, { total: number; done: number }>;
   linkedTodosByFeature?: Record<
     string,
-    { id: string; title: string; status: "todo" | "in_progress" | "done" }[]
+    {
+      id: string;
+      title: string;
+      status: "todo" | "in_progress" | "done";
+      priority?: Priority;
+    }[]
   >;
   onQuickAddTodo?: (featureId: string, title: string) => void;
   onJumpToTodo?: (todoId: string) => void;
@@ -43,6 +52,7 @@ export function FeatureTodoList({
   features,
   onCreate,
   onToggle,
+  // onChangePriority,
   progressByFeature,
   linkedTodosByFeature,
   onQuickAddTodo,
@@ -52,14 +62,46 @@ export function FeatureTodoList({
   const [title, setTitle] = useState("");
   const [quickAddFor, setQuickAddFor] = useState<string | null>(null);
   const [quickTitle, setQuickTitle] = useState<string>("");
-  const [hideDoneFeatures, setHideDoneFeatures] = useState(false);
-  const [hideDoneLinkedTodos, setHideDoneLinkedTodos] = useState(false);
+  const [hideDoneFeatures] = useState(false);
+  const hideDoneLinkedTodos = useSettingsStore((s) => s.hideDoneLinkedTodos);
+  const toggleHideDoneLinkedTodos = useSettingsStore(
+    (s) => s.toggleHideDoneLinkedTodos
+  );
+  // const [priorityFor, setPriorityFor] = useState<string | null>(null);
 
   const data = useMemo(
     () =>
       hideDoneFeatures ? features.filter((f) => f.status !== "done") : features,
     [features, hideDoneFeatures]
   );
+
+  const dataSorted = useMemo(() => {
+    const weight = (p: FeatureTodo["priority"]) => {
+      switch (p ?? "normal") {
+        case "highest":
+          return 1;
+        case "high":
+          return 2;
+        case "normal":
+          return 3;
+        case "low":
+          return 4;
+        case "lowest":
+          return 5;
+        default:
+          return 3;
+      }
+    };
+    return data
+      .map((it, idx) => ({ it, idx }))
+      .sort((a, b) => {
+        const wa = weight(a.it.priority);
+        const wb = weight(b.it.priority);
+        if (wa !== wb) return wa - wb;
+        return a.idx - b.idx; // preserve incoming order (created_at asc)
+      })
+      .map((x) => x.it);
+  }, [data]);
 
   return (
     <div
@@ -96,7 +138,7 @@ export function FeatureTodoList({
                 : "var(--ant-color-text, rgba(0,0,0,.88))",
             }}
             icon={<EyeInvisibleOutlined />}
-            onClick={() => setHideDoneLinkedTodos((v) => !v)}
+            onClick={toggleHideDoneLinkedTodos}
           />
         </Tooltip>
         {/* <Tooltip title="완료된 feature 숨기기">
@@ -130,7 +172,7 @@ export function FeatureTodoList({
         }}
       >
         <List
-          dataSource={data}
+          dataSource={dataSorted}
           style={{ flex: 1, minHeight: 0 }}
           renderItem={(t) => {
             const prog = progressByFeature?.[t.id];
@@ -158,6 +200,31 @@ export function FeatureTodoList({
                     >
                       <Text delete={t.status === "done"}>{t.title}</Text>
                     </Checkbox>
+                    {/* <Select
+                      size="small"
+                      value={t.priority ?? "normal"}
+                      onChange={(val) => {
+                        onChangePriority?.(t.id, val as any);
+                        setPriorityFor(null);
+                      }}
+                      showAction={["click"]}
+                      variant="borderless"
+                      onBlur={() => setPriorityFor(null)}
+                      style={{ width: 120 }}
+                      popupMatchSelectWidth={false}
+                      labelRender={(label) =>
+                        priorityOptions[
+                          label.value as keyof typeof priorityOptions
+                        ]
+                      }
+                      options={[
+                        { value: "highest", label: "최상" },
+                        { value: "high", label: "상" },
+                        { value: "normal", label: "보통" },
+                        { value: "low", label: "하" },
+                        { value: "lowest", label: "최하" },
+                      ]}
+                    /> */}
                     {prog ? (
                       <Text
                         type="secondary"
@@ -254,7 +321,11 @@ export function FeatureTodoList({
                         : linkedTodosByFeature?.[t.id]
                     }
                     renderItem={(lt) => (
-                      <List.Item style={{ paddingLeft: 24 }}>
+                      <List.Item
+                        style={{
+                          paddingLeft: 16,
+                        }}
+                      >
                         <Checkbox
                           checked={lt.status === "done"}
                           onClick={(e) => {
@@ -263,6 +334,11 @@ export function FeatureTodoList({
                             onJumpToTodo?.(lt.id);
                           }}
                         >
+                          <img
+                            src={`/images/${lt.priority ?? "normal"}.png`}
+                            alt={lt.priority ?? "normal"}
+                            style={{ width: 16, height: 16, marginRight: 4 }}
+                          />
                           <Text
                             type="secondary"
                             style={{

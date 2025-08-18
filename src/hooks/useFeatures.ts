@@ -1,3 +1,4 @@
+import type { Priority } from "@/types/literal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 
@@ -6,6 +7,7 @@ export type Feature = {
   project_id: string;
   title: string;
   status: "todo" | "done";
+  priority?: Priority;
   created_at: string;
   updated_at: string;
 };
@@ -97,6 +99,28 @@ export function useDeleteFeature() {
       qc.invalidateQueries({
         queryKey: ["feature_linked_todos", vars.project_id],
       });
+    },
+  });
+}
+
+export function useUpdateFeaturePriority() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      project_id: string;
+      priority: Priority;
+    }) => {
+      const { error } = await supabase
+        .from("features")
+        .update({ priority: payload.priority })
+        .eq("id", payload.id)
+        .eq("project_id", payload.project_id);
+      if (error) throw error;
+      return true as const;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["features", vars.project_id] });
     },
   });
 }

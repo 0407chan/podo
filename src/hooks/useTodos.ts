@@ -1,3 +1,4 @@
+import type { Priority } from "@/types/literal";
 import {
   useInfiniteQuery,
   useMutation,
@@ -13,6 +14,7 @@ export type Todo = {
   title: string;
   status: "todo" | "done";
   feature_id: string | null;
+  priority?: Priority;
   order_index: number;
   created_at: string;
   updated_at: string;
@@ -183,6 +185,33 @@ export function useDeleteTodo() {
   });
 }
 
+export function useUpdateTodoPriority() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      project_id: string;
+      date: string;
+      priority: Priority;
+    }) => {
+      const { error } = await supabase
+        .from("todos")
+        .update({ priority: payload.priority })
+        .eq("id", payload.id);
+      if (error) throw error;
+      return true as const;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["todos", vars.project_id, vars.date] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
+      qc.invalidateQueries({
+        queryKey: ["feature_linked_todos", vars.project_id],
+      });
+    },
+  });
+}
+
 // ---- Infinite weekly loader grouped by date ----
 function formatDate(d: Date): string {
   const yyyy = d.getFullYear();
@@ -279,6 +308,7 @@ export type FeatureLinkedTodo = {
   feature_id: string;
   title: string;
   status: "todo" | "done";
+  priority?: Priority;
 };
 
 export function useFeatureLinkedTodos(projectId: string | undefined) {
@@ -288,7 +318,7 @@ export function useFeatureLinkedTodos(projectId: string | undefined) {
       if (!projectId) return {};
       const { data, error } = await supabase
         .from("todos")
-        .select("id, feature_id, title, status")
+        .select("id, feature_id, title, status, priority")
         .eq("project_id", projectId)
         .not("feature_id", "is", null)
         .order("created_at", { ascending: true });
@@ -301,6 +331,7 @@ export function useFeatureLinkedTodos(projectId: string | undefined) {
           feature_id: fid,
           title: row.title,
           status: row.status,
+          priority: row.priority,
         });
       }
       return map;

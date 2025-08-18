@@ -1,15 +1,16 @@
+import type { Priority } from "@/types/literal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DailyTodosPanel } from "../components/projects/detail/DailyTodosPanel";
 import { FeatureTodoList } from "../components/projects/detail/FeatureTodoList";
 import { ProjectDetailLayout } from "../components/projects/detail/ProjectDetailLayout";
 import { ProjectInfoCard } from "../components/projects/detail/ProjectInfoCard";
-// useDailies 제거 → 날짜는 todos에서 distinct로 사용
 import {
   useCreateFeature,
   useDeleteFeature,
   useFeatures,
   useToggleFeature,
+  useUpdateFeaturePriority,
 } from "../hooks/useFeatures";
 import { useProjects } from "../hooks/useProjects";
 import {
@@ -20,6 +21,7 @@ import {
   useFeatureProgress,
   useInfiniteTodosByWeek,
   useToggleTodoStatus,
+  useUpdateTodoPriority,
 } from "../hooks/useTodos";
 
 export function ProjectDetailPage() {
@@ -32,6 +34,7 @@ export function ProjectDetailPage() {
   const { mutateAsync: createFeature } = useCreateFeature();
   const { mutateAsync: toggleFeature } = useToggleFeature();
   const { mutateAsync: deleteFeature } = useDeleteFeature();
+  const { mutateAsync: updateFeaturePriority } = useUpdateFeaturePriority();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   // 주간 단위 무한 스크롤 로딩
@@ -40,6 +43,7 @@ export function ProjectDetailPage() {
   const { mutateAsync: toggleTodo } = useToggleTodoStatus();
   const { mutateAsync: assignTodoFeature } = useAssignTodoFeature();
   const { mutateAsync: deleteTodo } = useDeleteTodo();
+  const { mutateAsync: updateTodoPriority } = useUpdateTodoPriority();
 
   const { data: progress = [] } = useFeatureProgress(projectId);
   const { data: linkedTodosMap = {} } = useFeatureLinkedTodos(projectId);
@@ -166,6 +170,14 @@ export function ProjectDetailPage() {
             features={features}
             onCreate={handleCreateFeature}
             onToggle={handleToggleFeature}
+            onChangePriority={async (featureId, priority) => {
+              if (!projectId) return;
+              await updateFeaturePriority({
+                id: featureId,
+                project_id: projectId,
+                priority: (priority ?? "normal") as Priority,
+              });
+            }}
             progressByFeature={progressByFeature}
             linkedTodosByFeature={linkedTodosMap}
             onJumpToTodo={(todoId) => {
@@ -243,6 +255,19 @@ export function ProjectDetailPage() {
               await deleteTodo({ id: todoId, project_id: projectId, date });
             }}
             features={features}
+            onChangePriority={async (todoId, priority) => {
+              if (!projectId || !selectedDate) return;
+              const pages = (weeklyTodos.data as any)?.pages ?? [];
+              const all = pages.flatMap((p: any) => p.items) as any[];
+              const cur = all.find((t) => t.id === todoId);
+              const date = cur?.date ?? selectedDate;
+              await updateTodoPriority({
+                id: todoId,
+                project_id: projectId,
+                date,
+                priority,
+              });
+            }}
           />
           <div ref={loadMoreRef} />
         </div>
