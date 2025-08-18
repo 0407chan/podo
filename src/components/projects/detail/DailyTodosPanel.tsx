@@ -51,7 +51,7 @@ export function DailyTodosPanel({
   features,
   registerTodoEl,
   onChangePriority,
-  onRolloverClick,
+  // onRolloverClick,
   onJumpToTodo,
   onRolloverSeries,
 }: Props) {
