@@ -192,13 +192,13 @@ export function DailyTodosPanel({
                   enterButton="추가"
                 />
               )}
-              {isToday && (
+              {/* {isToday && (
                 <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
                   <Button size="small" onClick={onRolloverClick}>
                     과거 미완료 이어오기
                   </Button>
                 </div>
-              )}
+              )} */}
             </div>
             <List
               dataSource={itemsSorted}
