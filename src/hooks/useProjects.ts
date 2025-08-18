@@ -45,6 +45,9 @@ export function useUpdateProject() {
                 ...(typeof variables.due_date !== "undefined"
                   ? { due_date: variables.due_date }
                   : {}),
+                ...(typeof (variables as any).logo_url !== "undefined"
+                  ? { logo_url: (variables as any).logo_url }
+                  : {}),
               }
             : p
         );

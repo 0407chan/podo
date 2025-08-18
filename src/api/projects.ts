@@ -8,6 +8,7 @@ export type Project = {
   status: string | null;
   start_date: string | null;
   due_date: string | null;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -27,6 +28,7 @@ export async function createProject(payload: {
   description?: string | null;
   start_date?: string | null;
   due_date?: string | null;
+  logo_url?: string | null;
 }): Promise<Project> {
   const { data, error } = await supabase
     .from("projects")
@@ -35,6 +37,7 @@ export async function createProject(payload: {
       description: payload.description ?? null,
       start_date: payload.start_date ?? null,
       due_date: payload.due_date ?? null,
+      logo_url: payload.logo_url ?? null,
     })
     .select("*")
     .single();
@@ -48,6 +51,7 @@ export async function updateProject(payload: {
   name?: string;
   start_date?: string | null;
   due_date?: string | null;
+  logo_url?: string | null;
 }): Promise<Project> {
   const updates: Record<string, any> = {};
   if (typeof payload.name !== "undefined") updates.name = payload.name;
@@ -55,6 +59,8 @@ export async function updateProject(payload: {
     updates.start_date = payload.start_date;
   if (typeof payload.due_date !== "undefined")
     updates.due_date = payload.due_date;
+  if (typeof payload.logo_url !== "undefined")
+    updates.logo_url = payload.logo_url;
 
   const { data, error } = await supabase
     .from("projects")

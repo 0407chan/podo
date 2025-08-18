@@ -1,3 +1,5 @@
+import type { Project } from "@/api/projects";
+import { supabase } from "@/lib/supabaseClient";
 import { FolderOpenOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Layout, Menu, message } from "antd";
 import { useMemo, useState } from "react";
@@ -17,6 +19,14 @@ export function Sidebar() {
     const m = pathname.match(/\/projects\/(.+)/);
     return m ? [m[1]] : [];
   }, [pathname]);
+
+  const logoPublicUrl = (project: Project) => {
+    if (!project.logo_url) return undefined;
+    const { data } = supabase.storage
+      .from("project-logos")
+      .getPublicUrl(project.logo_url);
+    return data.publicUrl;
+  };
 
   const onCreate = async (values: {
     name: string;
@@ -53,7 +63,15 @@ export function Sidebar() {
           selectedKeys={selectedKeys}
           items={(data ?? []).map((p) => ({
             key: p.id,
-            icon: <FolderOpenOutlined />,
+            icon: p.logo_url ? (
+              <img
+                src={logoPublicUrl(p)}
+                alt="logo"
+                style={{ width: 16, height: 16 }}
+              />
+            ) : (
+              <FolderOpenOutlined />
+            ),
             label: (
               <NavLink to={`/projects/${p.id}`} style={{ color: "inherit" }}>
                 {p.name}
