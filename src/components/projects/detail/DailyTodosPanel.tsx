@@ -66,6 +66,11 @@ export function DailyTodosPanel({
       arr.push(t);
       map.set(t.date, arr);
     }
+    // Ensure today's panel is always present even if there are no todos
+    const todayStr = dayjs().format("YYYY-MM-DD");
+    if (!map.has(todayStr)) {
+      map.set(todayStr, []);
+    }
     const entries = Array.from(map.entries()).sort(([a], [b]) =>
       a > b ? -1 : a < b ? 1 : 0
     );
@@ -191,7 +196,7 @@ export function DailyTodosPanel({
                     <List.Item
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "auto 32px 1fr auto auto",
+                        gridTemplateColumns: "auto 50px 1fr auto auto",
                         gap: 8,
                         alignItems: "center",
                         width: "100%",
@@ -207,13 +212,21 @@ export function DailyTodosPanel({
                         onChange={(val) => {
                           onChangePriority?.(t.id, val as Priority);
                         }}
-                        style={{ width: "fit-content" }}
+                        style={{ width: 50 }}
                         labelRender={(label) => (
-                          <img
-                            src={`/images/${label.value}.png`}
-                            alt={label.value as string}
-                            style={{ width: 16, height: 16 }}
-                          />
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <img
+                              src={`/images/${label.value}.png`}
+                              alt={label.value as string}
+                              style={{ width: 16, height: 16 }}
+                            />
+                          </div>
                         )}
                         optionRender={(option) => (
                           <img
@@ -224,7 +237,6 @@ export function DailyTodosPanel({
                         )}
                         suffixIcon={null}
                         variant="borderless"
-                        popupMatchSelectWidth={false}
                         options={[
                           { value: "highest", label: "최상" },
                           { value: "high", label: "상" },
