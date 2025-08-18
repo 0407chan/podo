@@ -44,7 +44,7 @@ export function Sidebar() {
         style={{
           padding: "0 8px",
           overflowY: "auto",
-          height: "calc(100vh - 190px)",
+          height: "calc(100vh - 32px - 64px)",
         }}
       >
         <Menu
