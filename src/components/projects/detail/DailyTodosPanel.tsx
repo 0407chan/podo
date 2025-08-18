@@ -12,6 +12,7 @@ import {
   Tag,
   Tooltip,
 } from "antd";
+import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import type { FeatureTodo } from "./FeatureTodoList";
 
@@ -106,6 +107,7 @@ export function DailyTodosPanel({
             return a.idx - b.idx;
           })
           .map((x) => x.it);
+        const isToday = dayjs(date).isSame(dayjs(), "day");
         return (
           <div
             key={date}
@@ -131,7 +133,7 @@ export function DailyTodosPanel({
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
-                  marginBottom: 8,
+                  marginBottom: isToday ? 8 : 0,
                 }}
               >
                 <div
@@ -154,20 +156,22 @@ export function DailyTodosPanel({
                   />
                 </Tooltip>
               </div>
-              <Input.Search
-                placeholder={`${date} 할 일`}
-                value={inputs[date] ?? ""}
-                onChange={(e) =>
-                  setInputs((s) => ({ ...s, [date]: e.target.value }))
-                }
-                onSearch={(val) => {
-                  const v = val.trim();
-                  if (!v) return;
-                  onCreate(date, v);
-                  setInputs((s) => ({ ...s, [date]: "" }));
-                }}
-                enterButton="추가"
-              />
+              {isToday && (
+                <Input.Search
+                  placeholder={`${date} 할 일`}
+                  value={inputs[date] ?? ""}
+                  onChange={(e) =>
+                    setInputs((s) => ({ ...s, [date]: e.target.value }))
+                  }
+                  onSearch={(val) => {
+                    const v = val.trim();
+                    if (!v) return;
+                    onCreate(date, v);
+                    setInputs((s) => ({ ...s, [date]: "" }));
+                  }}
+                  enterButton="추가"
+                />
+              )}
             </div>
             <div style={{ padding: "0 12px" }}>
               <List

@@ -1,4 +1,5 @@
 import type { Priority } from "@/types/literal";
+import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DailyTodosPanel } from "../components/projects/detail/DailyTodosPanel";
@@ -223,6 +224,7 @@ export function ProjectDetailPage() {
             onCreate={async (date, title) => {
               if (!projectId) return;
               if (selectedDate !== date) setSelectedDate(date);
+              if (!dayjs(date).isSame(dayjs(), "day")) return;
               await createTodo({ project_id: projectId, date, title });
             }}
             onToggle={async (todoId) => {
