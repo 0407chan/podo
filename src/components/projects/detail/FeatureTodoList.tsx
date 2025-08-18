@@ -1,5 +1,18 @@
-import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { Checkbox, Input, List, Popconfirm, Progress, Typography } from "antd";
+import {
+  DeleteOutlined,
+  EyeInvisibleOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Checkbox,
+  Input,
+  List,
+  Popconfirm,
+  Progress,
+  Tooltip,
+  Typography,
+} from "antd";
 import { useMemo, useState } from "react";
 const { Text } = Typography;
 
@@ -39,8 +52,14 @@ export function FeatureTodoList({
   const [title, setTitle] = useState("");
   const [quickAddFor, setQuickAddFor] = useState<string | null>(null);
   const [quickTitle, setQuickTitle] = useState<string>("");
+  const [hideDoneFeatures, setHideDoneFeatures] = useState(false);
+  const [hideDoneLinkedTodos, setHideDoneLinkedTodos] = useState(false);
 
-  const data = useMemo(() => features, [features]);
+  const data = useMemo(
+    () =>
+      hideDoneFeatures ? features.filter((f) => f.status !== "done") : features,
+    [features, hideDoneFeatures]
+  );
 
   return (
     <div
@@ -60,9 +79,44 @@ export function FeatureTodoList({
           fontSize: 14,
           fontWeight: 600,
           borderBottom: "1px solid var(--ant-color-split, #f0f0f0)",
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
         }}
       >
-        ⭐️ Features
+        <span style={{ marginRight: "auto" }}>⭐️ Features</span>
+        <Tooltip title="완료된 todo 숨기기">
+          <Button
+            aria-label="완료된 todo 숨기기"
+            type="text"
+            size="small"
+            style={{
+              color: hideDoneLinkedTodos
+                ? "var(--ant-color-primary, #1677ff)"
+                : "var(--ant-color-text, rgba(0,0,0,.88))",
+            }}
+            icon={<EyeInvisibleOutlined />}
+            onClick={() => setHideDoneLinkedTodos((v) => !v)}
+          />
+        </Tooltip>
+        {/* <Tooltip title="완료된 feature 숨기기">
+          <button
+            aria-label="완료된 feature 숨기기"
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              padding: "2px 6px",
+              borderRadius: 4,
+              color: hideDoneFeatures
+                ? "var(--ant-color-primary, #1677ff)"
+                : "var(--ant-color-text, rgba(0,0,0,.88))",
+            }}
+            onClick={() => setHideDoneFeatures((v) => !v)}
+          >
+            <EyeInvisibleOutlined />
+          </button>
+        </Tooltip> */}
       </div>
       <div
         style={{
@@ -183,11 +237,22 @@ export function FeatureTodoList({
                     <Progress percent={percent} size="small" showInfo={false} />
                   )}
                 </div>
-                {linkedTodosByFeature?.[t.id]?.length ? (
+                {(hideDoneLinkedTodos
+                  ? linkedTodosByFeature?.[t.id]?.filter(
+                      (lt) => lt.status !== "done"
+                    )
+                  : linkedTodosByFeature?.[t.id]
+                )?.length ? (
                   <List
                     size="small"
                     split={false}
-                    dataSource={linkedTodosByFeature[t.id]}
+                    dataSource={
+                      hideDoneLinkedTodos
+                        ? linkedTodosByFeature?.[t.id]?.filter(
+                            (lt) => lt.status !== "done"
+                          )
+                        : linkedTodosByFeature?.[t.id]
+                    }
                     renderItem={(lt) => (
                       <List.Item style={{ paddingLeft: 24 }}>
                         <Checkbox

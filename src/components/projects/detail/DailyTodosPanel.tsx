@@ -1,6 +1,15 @@
 import type { Todo } from "@/hooks/useTodos";
-import { DeleteOutlined } from "@ant-design/icons";
-import { Button, Checkbox, Input, List, Popconfirm, Select, Tag } from "antd";
+import { DeleteOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Checkbox,
+  Input,
+  List,
+  Popconfirm,
+  Select,
+  Tag,
+  Tooltip,
+} from "antd";
 import { useMemo, useState } from "react";
 import type { FeatureTodo } from "./FeatureTodoList";
 
@@ -37,10 +46,14 @@ export function DailyTodosPanel({
 }: Props) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [assignFor, setAssignFor] = useState<string | null>(null);
+  const [hideDoneTodos, setHideDoneTodos] = useState(false);
 
   const grouped = useMemo(() => {
+    const filtered = hideDoneTodos
+      ? todos.filter((t) => t.status !== "done")
+      : todos;
     const map = new Map<string, Todo[]>();
-    for (const t of todos) {
+    for (const t of filtered) {
       const arr = map.get(t.date) ?? [];
       arr.push(t);
       map.set(t.date, arr);
@@ -49,7 +62,7 @@ export function DailyTodosPanel({
       a > b ? -1 : a < b ? 1 : 0
     );
     return entries;
-  }, [todos]);
+  }, [todos, hideDoneTodos]);
 
   return (
     <div
@@ -79,8 +92,33 @@ export function DailyTodosPanel({
               borderBottom: "1px solid #f0f0f0",
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-              {formatLabel(date)}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{ fontSize: 14, fontWeight: 600, marginRight: "auto" }}
+              >
+                {formatLabel(date)}
+              </div>
+              <Tooltip title="완료된 todo 숨기기" placement="left">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EyeInvisibleOutlined />}
+                  aria-label="완료된 todo 숨기기"
+                  style={{
+                    color: hideDoneTodos
+                      ? "var(--ant-color-primary, #1677ff)"
+                      : "var(--ant-color-text, rgba(0,0,0,.88))",
+                  }}
+                  onClick={() => setHideDoneTodos((v) => !v)}
+                />
+              </Tooltip>
             </div>
             <Input.Search
               placeholder={`${date} 할 일`}
