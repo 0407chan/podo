@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { PlusOutlined } from "@ant-design/icons";
 import { DatePicker, Form, Input, Modal, Upload, message } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 type Props = {
   open: boolean;
@@ -38,12 +38,7 @@ export function ProjectFormModal({
     range?: [dayjs.Dayjs, dayjs.Dayjs];
     logo_url?: string | null;
   }>();
-  const [logoErrored, setLogoErrored] = useState(false);
-  const logoUrlWatch = Form.useWatch("logo_url", form);
-
-  useEffect(() => {
-    setLogoErrored(false);
-  }, [logoUrlWatch]);
+  // 로고 업로드 에러 상태는 현재 UI에서 사용하지 않아 제거
 
   useEffect(() => {
     if (open) {

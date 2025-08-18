@@ -15,42 +15,7 @@ export function ProjectInfoCard({ project }: Props) {
   const { mutateAsync: update, isPending } = useUpdateProject();
   const openModal = () => setOpen(true);
 
-  const handleSelectAndUpload = async (file: File) => {
-    try {
-      // 1) 간단한 타입/사이즈 검사 (2MB 제한)
-      if (!file.type.startsWith("image/")) {
-        message.error("이미지 파일만 업로드할 수 있어");
-        return false;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        message.error("2MB 이하 이미지로 업로드해줘");
-        return false;
-      }
-
-      // 2) 128x128 리사이즈 + webp 압축
-      const resizedBlob = await resizeToWebp(file, 128, 128, 0.9);
-
-      // 3) Storage 업로드
-      const objectPath = `projects/${
-        project.id
-      }/${Date.now()}-${file.name.replace(/\s+/g, "_")}.webp`;
-      const { error: uploadError } = await supabase.storage
-        .from("project-logos")
-        .upload(objectPath, resizedBlob, {
-          upsert: true,
-          contentType: "image/webp",
-        });
-      if (uploadError) throw uploadError;
-
-      // 4) DB 업데이트
-      await update({ id: project.id, logo_url: objectPath });
-      message.success("로고를 업데이트했어");
-      return false;
-    } catch (e: any) {
-      message.error(e?.message ?? "업로드 실패");
-      return false;
-    }
-  };
+  // 파일 업로드는 `ProjectFormModal`에서 처리
 
   const logoPublicUrl = (() => {
     if (!project.logo_url) return undefined;
@@ -60,31 +25,7 @@ export function ProjectInfoCard({ project }: Props) {
     return data.publicUrl;
   })();
 
-  async function resizeToWebp(
-    file: File,
-    maxW: number,
-    maxH: number,
-    quality = 0.9
-  ): Promise<Blob> {
-    const bitmap = await createImageBitmap(file);
-    const ratio = Math.min(maxW / bitmap.width, maxH / bitmap.height, 1);
-    const w = Math.round(bitmap.width * ratio);
-    const h = Math.round(bitmap.height * ratio);
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("캔버스 생성 실패");
-    ctx.drawImage(bitmap, 0, 0, w, h);
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error("이미지 인코딩 실패"))),
-        "image/webp",
-        quality
-      );
-    });
-    return blob;
-  }
+  // 로컬 업로드 유틸은 이 파일에선 사용하지 않아 제거
 
   return (
     <Card

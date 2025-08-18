@@ -21,6 +21,8 @@ import {
   useFeatureLinkedTodos,
   useFeatureProgress,
   useInfiniteTodosByWeek,
+  useRolloverSeriesToToday,
+  useRolloverTodosToToday,
   useToggleTodoStatus,
   useUpdateTodoPriority,
 } from "../hooks/useTodos";
@@ -48,6 +50,8 @@ export function ProjectDetailPage() {
 
   const { data: progress = [] } = useFeatureProgress(projectId);
   const { data: linkedTodosMap = {} } = useFeatureLinkedTodos(projectId);
+  const { mutateAsync: rolloverToToday } = useRolloverTodosToToday();
+  const { mutateAsync: rolloverSeries } = useRolloverSeriesToToday();
   const progressByFeature = useMemo(() => {
     const map: Record<string, { total: number; done: number }> = {};
     for (const p of progress)
@@ -221,11 +225,29 @@ export function ProjectDetailPage() {
               return pages.flatMap((p: any) => p.items) as any[];
             })()}
             registerTodoEl={registerTodoEl}
+            onJumpToTodo={(todoId) => {
+              void focusTodoById(todoId);
+            }}
             onCreate={async (date, title) => {
               if (!projectId) return;
               if (selectedDate !== date) setSelectedDate(date);
               if (!dayjs(date).isSame(dayjs(), "day")) return;
               await createTodo({ project_id: projectId, date, title });
+            }}
+            onRolloverClick={async () => {
+              if (!projectId) return;
+              const today = dayjs().format("YYYY-MM-DD");
+              if (selectedDate !== today) setSelectedDate(today);
+              await rolloverToToday({ project_id: projectId });
+            }}
+            onRolloverSeries={async (seriesId) => {
+              if (!projectId) return;
+              const today = dayjs().format("YYYY-MM-DD");
+              if (selectedDate !== today) setSelectedDate(today);
+              await rolloverSeries({
+                project_id: projectId,
+                series_id: seriesId,
+              });
             }}
             onToggle={async (todoId) => {
               if (!projectId || !selectedDate) return;

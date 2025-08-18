@@ -25,6 +25,9 @@ type Props = {
   features: FeatureTodo[];
   registerTodoEl?: (todoId: string, el: HTMLElement | null) => void;
   onChangePriority?: (todoId: string, priority: Priority) => void;
+  onRolloverClick?: () => void;
+  onJumpToTodo?: (todoId: string) => void;
+  onRolloverSeries?: (seriesId: string) => void;
 };
 
 function formatLabel(date: string): string {
@@ -48,6 +51,9 @@ export function DailyTodosPanel({
   features,
   registerTodoEl,
   onChangePriority,
+  onRolloverClick,
+  onJumpToTodo,
+  onRolloverSeries,
 }: Props) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [assignFor, setAssignFor] = useState<string | null>(null);
@@ -76,6 +82,15 @@ export function DailyTodosPanel({
     );
     return entries;
   }, [todos, hideDoneTodos]);
+
+  const latestBySeries = useMemo(() => {
+    const map = new Map<string, Todo>();
+    for (const t of todos) {
+      const prev = map.get(t.series_id);
+      if (!prev || t.date > prev.date) map.set(t.series_id, t);
+    }
+    return map;
+  }, [todos]);
 
   return (
     <div
@@ -177,6 +192,13 @@ export function DailyTodosPanel({
                   enterButton="추가"
                 />
               )}
+              {isToday && (
+                <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                  <Button size="small" onClick={onRolloverClick}>
+                    과거 미완료 이어오기
+                  </Button>
+                </div>
+              )}
             </div>
             <div style={{ padding: "0 12px" }}>
               <List
@@ -201,11 +223,45 @@ export function DailyTodosPanel({
                         alignItems: "center",
                         width: "100%",
                       }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as any)._hover = true;
+                        (e.currentTarget as HTMLElement).style.setProperty(
+                          "--hover",
+                          "1"
+                        );
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as any)._hover = false;
+                        (e.currentTarget as HTMLElement).style.removeProperty(
+                          "--hover"
+                        );
+                      }}
                     >
-                      <Checkbox
-                        checked={t.status === "done"}
-                        onChange={() => onToggle(t.id)}
-                      />
+                      {(() => {
+                        const latest = latestBySeries.get(t.series_id);
+                        const isEditable = latest?.id === t.id;
+                        if (isEditable) {
+                          return (
+                            <Checkbox
+                              checked={t.status === "done"}
+                              onChange={() => onToggle(t.id)}
+                            />
+                          );
+                        }
+                        return (
+                          <Button
+                            type="text"
+                            size="small"
+                            title="오늘 항목으로 이동"
+                            onClick={() => {
+                              const latest = latestBySeries.get(t.series_id);
+                              if (latest) onJumpToTodo?.(latest.id);
+                            }}
+                          >
+                            ⏭️
+                          </Button>
+                        );
+                      })()}
                       <Select
                         size="small"
                         value={t.priority ?? "normal"}
@@ -254,37 +310,73 @@ export function DailyTodosPanel({
                       >
                         {t.title}
                       </div>
-                      {assignFor === t.id ? (
-                        <Select
-                          size="small"
-                          value={t.feature_id ?? undefined}
-                          onChange={(val) => {
-                            onAssign(t.id, (val as string) || null);
-                            setAssignFor(null);
-                          }}
-                          allowClear
-                          showSearch
-                          placeholder="연결 안 함"
-                          style={{ width: 140 }}
-                          dropdownMatchSelectWidth={false}
-                          options={features.map((f) => ({
-                            value: f.id,
-                            label: f.title,
-                          }))}
-                          onBlur={() => setAssignFor(null)}
-                        />
-                      ) : (
-                        <Tag
-                          onClick={() => setAssignFor(t.id)}
-                          style={{ cursor: "pointer", width: "fit-content" }}
-                          color={t.feature_id ? "blue" : undefined}
-                        >
-                          {t.feature_id
-                            ? features.find((f) => f.id === t.feature_id)
-                                ?.title || "연결됨"
-                            : "연결 안 함"}
-                        </Tag>
-                      )}
+                      {(() => {
+                        const todayStr = dayjs().format("YYYY-MM-DD");
+                        const latest = latestBySeries.get(t.series_id);
+                        const seriesContinuedToday = latest?.date === todayStr;
+                        const showRollover =
+                          !isToday &&
+                          !seriesContinuedToday &&
+                          t.status !== "done";
+                        return (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            {showRollover && (
+                              <Button
+                                type="link"
+                                size="small"
+                                title="오늘 이어가기"
+                                style={{
+                                  padding: 0,
+                                  opacity: "var(--hover, 0)",
+                                }}
+                                onClick={() => onRolloverSeries?.(t.series_id)}
+                              >
+                                오늘 이어가기
+                              </Button>
+                            )}
+                            {assignFor === t.id ? (
+                              <Select
+                                size="small"
+                                value={t.feature_id ?? undefined}
+                                onChange={(val) => {
+                                  onAssign(t.id, (val as string) || null);
+                                  setAssignFor(null);
+                                }}
+                                allowClear
+                                showSearch
+                                placeholder="연결 안 함"
+                                style={{ width: 140 }}
+                                dropdownMatchSelectWidth={false}
+                                options={features.map((f) => ({
+                                  value: f.id,
+                                  label: f.title,
+                                }))}
+                                onBlur={() => setAssignFor(null)}
+                              />
+                            ) : (
+                              <Tag
+                                onClick={() => setAssignFor(t.id)}
+                                style={{
+                                  cursor: "pointer",
+                                  width: "fit-content",
+                                }}
+                                color={t.feature_id ? "blue" : undefined}
+                              >
+                                {t.feature_id
+                                  ? features.find((f) => f.id === t.feature_id)
+                                      ?.title || "연결됨"
+                                  : "연결 안 함"}
+                              </Tag>
+                            )}
+                          </div>
+                        );
+                      })()}
                       <div
                         style={{ display: "flex", justifyContent: "flex-end" }}
                       >

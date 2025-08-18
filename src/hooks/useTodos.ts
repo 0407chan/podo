@@ -18,6 +18,8 @@ export type Todo = {
   order_index: number;
   created_at: string;
   updated_at: string;
+  series_id: string;
+  rolled_from_id: string | null;
 };
 
 export function useTodoDates(projectId: string | undefined) {
@@ -108,20 +110,159 @@ export function useToggleTodoStatus() {
     }) => {
       const { data: prev, error: readErr } = await supabase
         .from("todos")
-        .select("status")
+        .select("status, series_id")
         .eq("id", payload.id)
         .single();
       if (readErr) throw readErr;
       const next = prev?.status === "done" ? "todo" : "done";
+      const seriesId = (prev as any)?.series_id as string | undefined;
+      if (!seriesId) throw new Error("series_id not found");
       const { error } = await supabase
         .from("todos")
         .update({ status: next })
-        .eq("id", payload.id);
+        .eq("project_id", payload.project_id)
+        .eq("series_id", seriesId);
       if (error) throw error;
       return { id: payload.id, next } as const;
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["todos", vars.project_id, vars.date] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
+      qc.invalidateQueries({
+        queryKey: ["feature_linked_todos", vars.project_id],
+      });
+    },
+  });
+}
+
+export function useRolloverTodosToToday() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { project_id: string }) => {
+      const projectId = payload.project_id;
+      // today string
+      const today = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      })();
+
+      // 1) fetch today's existing series to avoid duplicates
+      const { data: todayRows, error: todayErr } = await supabase
+        .from("todos")
+        .select("series_id")
+        .eq("project_id", projectId)
+        .eq("date", today);
+      if (todayErr) throw todayErr;
+      const todaySeries = new Set<string>(
+        (todayRows ?? []).map((r: any) => r.series_id as string)
+      );
+
+      // 2) fetch past, not-done rows
+      const { data: pastRows, error: pastErr } = await supabase
+        .from("todos")
+        .select("id, series_id, title, feature_id, priority, date, status")
+        .eq("project_id", projectId)
+        .lt("date", today)
+        .eq("status", "todo")
+        .order("date", { ascending: false });
+      if (pastErr) throw pastErr;
+
+      // 3) pick latest row per series
+      const latestBySeries = new Map<string, any>();
+      for (const row of (pastRows ?? []) as any[]) {
+        const sid = row.series_id as string;
+        if (!latestBySeries.has(sid)) latestBySeries.set(sid, row);
+      }
+
+      // 4) build inserts excluding series already present today
+      const inserts = Array.from(latestBySeries.values())
+        .filter((r: any) => !todaySeries.has(r.series_id as string))
+        .map((r: any) => ({
+          project_id: projectId,
+          date: today,
+          title: r.title as string,
+          feature_id: (r.feature_id as string | null) ?? null,
+          priority: r.priority ?? null,
+          series_id: r.series_id as string,
+          rolled_from_id: r.id as string,
+          status: "todo",
+        }));
+
+      if (inserts.length === 0) return { inserted: 0 } as const;
+
+      const { error: insErr } = await supabase.from("todos").insert(inserts);
+      if (insErr) throw insErr;
+      return { inserted: inserts.length } as const;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["todos", vars.project_id] as any });
+      qc.invalidateQueries({ queryKey: ["todo_dates", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
+      qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
+      qc.invalidateQueries({
+        queryKey: ["feature_linked_todos", vars.project_id],
+      });
+    },
+  });
+}
+
+export function useRolloverSeriesToToday() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { project_id: string; series_id: string }) => {
+      const { project_id: projectId, series_id } = payload;
+      const today = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      })();
+
+      // skip if already exists today
+      const { data: existing, error: existErr } = await supabase
+        .from("todos")
+        .select("id")
+        .eq("project_id", projectId)
+        .eq("series_id", series_id)
+        .eq("date", today)
+        .maybeSingle();
+      if (existErr) throw existErr;
+      if (existing) return { inserted: 0 } as const;
+
+      // latest row in series
+      const { data: latest, error: latestErr } = await supabase
+        .from("todos")
+        .select("id, title, feature_id, priority")
+        .eq("project_id", projectId)
+        .eq("series_id", series_id)
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestErr) throw latestErr;
+      if (!latest) throw new Error("series not found");
+
+      const { error: insErr } = await supabase.from("todos").insert({
+        project_id: projectId,
+        date: today,
+        title: (latest as any).title as string,
+        feature_id: ((latest as any).feature_id as string | null) ?? null,
+        priority: (latest as any).priority ?? null,
+        series_id,
+        rolled_from_id: (latest as any).id as string,
+        status: "todo",
+      });
+      if (insErr) throw insErr;
+      return { inserted: 1 } as const;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["todos", vars.project_id] as any });
+      qc.invalidateQueries({ queryKey: ["todo_dates", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["todos_weekly", vars.project_id] });
       qc.invalidateQueries({ queryKey: ["feature_progress", vars.project_id] });
       qc.invalidateQueries({
@@ -280,16 +421,22 @@ export function useFeatureProgress(projectId: string | undefined) {
       if (!projectId) return [];
       const { data, error } = await supabase
         .from("todos")
-        .select("feature_id, status")
-        .eq("project_id", projectId);
+        .select("series_id, feature_id, status, date")
+        .eq("project_id", projectId)
+        .order("date", { ascending: true });
       if (error) throw error;
-      const map = new Map<string, { total: number; done: number }>();
+      const latestBySeries = new Map<string, any>();
       for (const row of (data ?? []) as any[]) {
+        const sid = row.series_id as string;
+        latestBySeries.set(sid, row); // ascending order ensures last wins
+      }
+      const map = new Map<string, { total: number; done: number }>();
+      for (const row of Array.from(latestBySeries.values())) {
         const fid = row.feature_id as string | null;
         if (!fid) continue;
         const entry = map.get(fid) ?? { total: 0, done: 0 };
         entry.total += 1;
-        if (row.status === "done") entry.done += 1;
+        if ((row.status as string) === "done") entry.done += 1;
         map.set(fid, entry);
       }
       return Array.from(map.entries()).map(([feature_id, v]) => ({
@@ -318,20 +465,25 @@ export function useFeatureLinkedTodos(projectId: string | undefined) {
       if (!projectId) return {};
       const { data, error } = await supabase
         .from("todos")
-        .select("id, feature_id, title, status, priority")
+        .select("id, series_id, feature_id, title, status, priority, date")
         .eq("project_id", projectId)
         .not("feature_id", "is", null)
+        .order("date", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
-      const map: Record<string, FeatureLinkedTodo[]> = {};
+      const latestBySeries = new Map<string, any>();
       for (const row of (data ?? []) as any[]) {
+        latestBySeries.set(row.series_id as string, row); // last wins
+      }
+      const map: Record<string, FeatureLinkedTodo[]> = {};
+      for (const row of Array.from(latestBySeries.values())) {
         const fid = row.feature_id as string;
         (map[fid] ??= []).push({
-          id: row.id,
+          id: row.id as string,
           feature_id: fid,
-          title: row.title,
-          status: row.status,
-          priority: row.priority,
+          title: row.title as string,
+          status: row.status as any,
+          priority: row.priority as any,
         });
       }
       return map;
