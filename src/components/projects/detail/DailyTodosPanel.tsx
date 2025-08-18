@@ -200,207 +200,210 @@ export function DailyTodosPanel({
                 </div>
               )}
             </div>
-            <div style={{ padding: "0 12px" }}>
-              <List
-                dataSource={itemsSorted}
-                locale={{ emptyText: "오늘 할 일이 없어" }}
-                renderItem={(t) => (
-                  <span
-                    ref={(el) => registerTodoEl?.(t.id, el)}
-                    data-todo-id={t.id}
-                    tabIndex={-1}
+            <List
+              dataSource={itemsSorted}
+              locale={{ emptyText: "오늘 할 일이 없어" }}
+              renderItem={(t) => (
+                <span
+                  ref={(el) => registerTodoEl?.(t.id, el)}
+                  data-todo-id={t.id}
+                  tabIndex={-1}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <List.Item
                     style={{
-                      display: "inline-flex",
+                      display: "grid",
+                      gridTemplateColumns: "auto 50px 1fr auto auto",
+                      gap: 8,
                       alignItems: "center",
                       width: "100%",
+                      padding: "8px 12px",
+                      backgroundColor:
+                        "rgba(0,0,0, calc(var(--hover, 0) * 0.03))",
+                      transition: "background-color 0.2s ease",
+                      borderRadius: 8,
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as any)._hover = true;
+                      (e.currentTarget as HTMLElement).style.setProperty(
+                        "--hover",
+                        "1"
+                      );
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as any)._hover = false;
+                      (e.currentTarget as HTMLElement).style.removeProperty(
+                        "--hover"
+                      );
                     }}
                   >
-                    <List.Item
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "auto 50px 1fr auto auto",
-                        gap: 8,
-                        alignItems: "center",
-                        width: "100%",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as any)._hover = true;
-                        (e.currentTarget as HTMLElement).style.setProperty(
-                          "--hover",
-                          "1"
-                        );
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as any)._hover = false;
-                        (e.currentTarget as HTMLElement).style.removeProperty(
-                          "--hover"
-                        );
-                      }}
-                    >
-                      {(() => {
-                        const latest = latestBySeries.get(t.series_id);
-                        const isEditable = latest?.id === t.id;
-                        if (isEditable) {
-                          return (
-                            <Checkbox
-                              checked={t.status === "done"}
-                              onChange={() => onToggle(t.id)}
-                            />
-                          );
-                        }
+                    {(() => {
+                      const latest = latestBySeries.get(t.series_id);
+                      const isEditable = latest?.id === t.id;
+                      if (isEditable) {
                         return (
-                          <Button
-                            type="text"
-                            size="small"
-                            title="오늘 항목으로 이동"
-                            onClick={() => {
-                              const latest = latestBySeries.get(t.series_id);
-                              if (latest) onJumpToTodo?.(latest.id);
-                            }}
-                          >
-                            ⏭️
-                          </Button>
+                          <Checkbox
+                            checked={t.status === "done"}
+                            onChange={() => onToggle(t.id)}
+                          />
                         );
-                      })()}
-                      <Select
-                        size="small"
-                        value={t.priority ?? "normal"}
-                        onChange={(val) => {
-                          onChangePriority?.(t.id, val as Priority);
-                        }}
-                        style={{ width: 50 }}
-                        labelRender={(label) => (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <img
-                              src={`/images/${label.value}.png`}
-                              alt={label.value as string}
-                              style={{ width: 16, height: 16 }}
-                            />
-                          </div>
-                        )}
-                        optionRender={(option) => (
+                      }
+                      return (
+                        <Button
+                          type="text"
+                          size="small"
+                          title="오늘 항목으로 이동"
+                          onClick={() => {
+                            const latest = latestBySeries.get(t.series_id);
+                            if (latest) onJumpToTodo?.(latest.id);
+                          }}
+                        >
+                          ⏭️
+                        </Button>
+                      );
+                    })()}
+                    <Select
+                      size="small"
+                      value={t.priority ?? "normal"}
+                      onChange={(val) => {
+                        onChangePriority?.(t.id, val as Priority);
+                      }}
+                      style={{ width: 50 }}
+                      labelRender={(label) => (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
                           <img
-                            src={`/images/${option.value}.png`}
-                            alt={option.value as string}
+                            src={`/images/${label.value}.png`}
+                            alt={label.value as string}
                             style={{ width: 16, height: 16 }}
                           />
-                        )}
-                        suffixIcon={null}
-                        variant="borderless"
-                        options={[
-                          { value: "highest", label: "최상" },
-                          { value: "high", label: "상" },
-                          { value: "normal", label: "보통" },
-                          { value: "low", label: "하" },
-                          { value: "lowest", label: "최하" },
-                        ]}
-                      />
+                        </div>
+                      )}
+                      optionRender={(option) => (
+                        <img
+                          src={`/images/${option.value}.png`}
+                          alt={option.value as string}
+                          style={{ width: 16, height: 16 }}
+                        />
+                      )}
+                      suffixIcon={null}
+                      variant="borderless"
+                      options={[
+                        { value: "highest", label: "최상" },
+                        { value: "high", label: "상" },
+                        { value: "normal", label: "보통" },
+                        { value: "low", label: "하" },
+                        { value: "lowest", label: "최하" },
+                      ]}
+                    />
 
-                      <div
-                        style={{
-                          textDecoration:
-                            t.status === "done" ? "line-through" : undefined,
-                        }}
-                      >
-                        {t.title}
-                      </div>
-                      {(() => {
-                        const todayStr = dayjs().format("YYYY-MM-DD");
-                        const latest = latestBySeries.get(t.series_id);
-                        const seriesContinuedToday = latest?.date === todayStr;
-                        const showRollover =
-                          !isToday &&
-                          !seriesContinuedToday &&
-                          t.status !== "done";
-                        return (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 6,
-                            }}
-                          >
-                            {showRollover && (
-                              <Button
-                                type="link"
-                                size="small"
-                                title="오늘 이어가기"
-                                style={{
-                                  padding: 0,
-                                  opacity: "var(--hover, 0)",
-                                }}
-                                onClick={() => onRolloverSeries?.(t.series_id)}
-                              >
-                                오늘 이어가기
-                              </Button>
-                            )}
-                            {assignFor === t.id ? (
-                              <Select
-                                size="small"
-                                value={t.feature_id ?? undefined}
-                                onChange={(val) => {
-                                  onAssign(t.id, (val as string) || null);
-                                  setAssignFor(null);
-                                }}
-                                allowClear
-                                showSearch
-                                placeholder="연결 안 함"
-                                style={{ width: 140 }}
-                                dropdownMatchSelectWidth={false}
-                                options={features.map((f) => ({
-                                  value: f.id,
-                                  label: f.title,
-                                }))}
-                                onBlur={() => setAssignFor(null)}
-                              />
-                            ) : (
-                              <Tag
-                                onClick={() => setAssignFor(t.id)}
-                                style={{
-                                  cursor: "pointer",
-                                  width: "fit-content",
-                                }}
-                                color={t.feature_id ? "blue" : undefined}
-                              >
-                                {t.feature_id
-                                  ? features.find((f) => f.id === t.feature_id)
-                                      ?.title || "연결됨"
-                                  : "연결 안 함"}
-                              </Tag>
-                            )}
-                          </div>
-                        );
-                      })()}
-                      <div
-                        style={{ display: "flex", justifyContent: "flex-end" }}
-                      >
-                        <Popconfirm
-                          title="삭제하시겠습니까?"
-                          okText="삭제"
-                          cancelText="취소"
-                          okButtonProps={{ danger: true }}
-                          placement="topRight"
-                          onConfirm={() => onDelete(t.id)}
+                    <div
+                      style={{
+                        textDecoration:
+                          t.status === "done" ? "line-through" : undefined,
+                      }}
+                    >
+                      {t.title}
+                    </div>
+                    {(() => {
+                      const todayStr = dayjs().format("YYYY-MM-DD");
+                      const latest = latestBySeries.get(t.series_id);
+                      const seriesContinuedToday = latest?.date === todayStr;
+                      const showRollover =
+                        !isToday &&
+                        !seriesContinuedToday &&
+                        t.status !== "done";
+                      return (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
                         >
-                          <Button
-                            type="text"
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                          />
-                        </Popconfirm>
-                      </div>
-                    </List.Item>
-                  </span>
-                )}
-              />
-            </div>
+                          {showRollover && (
+                            <Button
+                              type="link"
+                              size="small"
+                              title="오늘 이어가기"
+                              style={{
+                                padding: 0,
+                                opacity: "var(--hover, 0)",
+                              }}
+                              onClick={() => onRolloverSeries?.(t.series_id)}
+                            >
+                              오늘 이어가기
+                            </Button>
+                          )}
+                          {assignFor === t.id ? (
+                            <Select
+                              size="small"
+                              value={t.feature_id ?? undefined}
+                              onChange={(val) => {
+                                onAssign(t.id, (val as string) || null);
+                                setAssignFor(null);
+                              }}
+                              allowClear
+                              showSearch
+                              placeholder="연결 안 함"
+                              style={{ width: 140 }}
+                              dropdownMatchSelectWidth={false}
+                              options={features.map((f) => ({
+                                value: f.id,
+                                label: f.title,
+                              }))}
+                              onBlur={() => setAssignFor(null)}
+                            />
+                          ) : (
+                            <Tag
+                              onClick={() => setAssignFor(t.id)}
+                              style={{
+                                cursor: "pointer",
+                                width: "fit-content",
+                              }}
+                              color={t.feature_id ? "blue" : undefined}
+                            >
+                              {t.feature_id
+                                ? features.find((f) => f.id === t.feature_id)
+                                    ?.title || "연결됨"
+                                : "연결 안 함"}
+                            </Tag>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    <div
+                      style={{ display: "flex", justifyContent: "flex-end" }}
+                    >
+                      <Popconfirm
+                        title="삭제하시겠습니까?"
+                        okText="삭제"
+                        cancelText="취소"
+                        okButtonProps={{ danger: true }}
+                        placement="topRight"
+                        onConfirm={() => onDelete(t.id)}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                        />
+                      </Popconfirm>
+                    </div>
+                  </List.Item>
+                </span>
+              )}
+            />
           </div>
         );
       })}
