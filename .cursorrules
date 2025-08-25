@@ -1,0 +1,18 @@
+<deverlop environment>
+- always use bun as package manager
+- always use vite as build tool
+- always use react as frontend framework
+- always use typescript as programming language
+- always use scss as css preprocessor
+- always use ant design as ui library
+- always use react-router-dom as routing library
+- always use react-hook-form as form library
+</deverlop environment>
+
+<project structure>
+
+</project structure>
+
+<coding style>
+
+</coding style>
