@@ -1,4 +1,6 @@
+import { useMyRole } from "@/hooks/useMembers";
 import type { Priority } from "@/types/literal";
+import { message } from "antd";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -32,6 +34,9 @@ export function ProjectDetailPage() {
   const { data } = useProjects();
   const project = (data ?? []).find((p) => p.id === id);
   const projectId = project?.id;
+  const ownerId = project?.owner_id;
+  const { data: myRole } = useMyRole(projectId, ownerId);
+  const canEdit = myRole === "owner" || myRole === "editor";
 
   const { data: features = [] } = useFeatures(projectId);
   const { mutateAsync: createFeature } = useCreateFeature();
@@ -153,13 +158,23 @@ export function ProjectDetailPage() {
   if (!id) return <div>No project selected</div>;
   if (!project) return <div>Loading project...</div>;
 
+  const requireEdit = () => {
+    if (!canEdit) {
+      message.warning("쓰기 권한이 없어요.");
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateFeature = async (title: string) => {
     if (!projectId) return;
+    if (!requireEdit()) return;
     await createFeature({ project_id: projectId, title });
   };
 
   const handleToggleFeature = async (todoId: string) => {
     if (!projectId) return;
+    if (!requireEdit()) return;
     await toggleFeature({ id: todoId, project_id: projectId });
   };
 
@@ -177,6 +192,7 @@ export function ProjectDetailPage() {
             onToggle={handleToggleFeature}
             onChangePriority={async (featureId, priority) => {
               if (!projectId) return;
+              if (!requireEdit()) return;
               await updateFeaturePriority({
                 id: featureId,
                 project_id: projectId,
@@ -190,6 +206,7 @@ export function ProjectDetailPage() {
             }}
             onQuickAddTodo={async (featureId: string, title: string) => {
               if (!projectId) return;
+              if (!requireEdit()) return;
               const today = (() => {
                 const d = new Date();
                 const yyyy = d.getFullYear();
@@ -206,6 +223,7 @@ export function ProjectDetailPage() {
             }}
             onDelete={async (featureId) => {
               if (!projectId) return;
+              if (!requireEdit()) return;
               await deleteFeature({ id: featureId, project_id: projectId });
             }}
           />
@@ -230,18 +248,21 @@ export function ProjectDetailPage() {
             }}
             onCreate={async (date, title) => {
               if (!projectId) return;
+              if (!requireEdit()) return;
               if (selectedDate !== date) setSelectedDate(date);
               if (!dayjs(date).isSame(dayjs(), "day")) return;
               await createTodo({ project_id: projectId, date, title });
             }}
             onRolloverClick={async () => {
               if (!projectId) return;
+              if (!requireEdit()) return;
               const today = dayjs().format("YYYY-MM-DD");
               if (selectedDate !== today) setSelectedDate(today);
               await rolloverToToday({ project_id: projectId });
             }}
             onRolloverSeries={async (seriesId) => {
               if (!projectId) return;
+              if (!requireEdit()) return;
               const today = dayjs().format("YYYY-MM-DD");
               if (selectedDate !== today) setSelectedDate(today);
               await rolloverSeries({
@@ -251,6 +272,7 @@ export function ProjectDetailPage() {
             }}
             onToggle={async (todoId) => {
               if (!projectId || !selectedDate) return;
+              if (!requireEdit()) return;
               const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
               const cur = all.find((t) => t.id === todoId);
@@ -259,6 +281,7 @@ export function ProjectDetailPage() {
             }}
             onAssign={async (todoId, featureId) => {
               if (!projectId || !selectedDate) return;
+              if (!requireEdit()) return;
               const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
               const cur = all.find((t) => t.id === todoId);
@@ -272,6 +295,7 @@ export function ProjectDetailPage() {
             }}
             onDelete={async (todoId) => {
               if (!projectId || !selectedDate) return;
+              if (!requireEdit()) return;
               const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
               const cur = all.find((t) => t.id === todoId);
@@ -281,6 +305,7 @@ export function ProjectDetailPage() {
             features={features}
             onChangePriority={async (todoId, priority) => {
               if (!projectId || !selectedDate) return;
+              if (!requireEdit()) return;
               const pages = (weeklyTodos.data as any)?.pages ?? [];
               const all = pages.flatMap((p: any) => p.items) as any[];
               const cur = all.find((t) => t.id === todoId);

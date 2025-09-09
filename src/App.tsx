@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { MainLayout } from "./layouts/MainLayout";
+import { InviteAcceptPage } from "./pages/InviteAcceptPage";
 import { LandingPage } from "./pages/LandingPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { QueryProvider } from "./providers/QueryProvider";
@@ -37,6 +38,7 @@ function App() {
                   </RequireAuth>
                 }
               />
+              <Route path="/invite" element={<InviteAcceptPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
