@@ -9,20 +9,20 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
     let mounted = true;
     (async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
-          const { error } = await supabase.auth.signInAnonymously();
-          if (error) throw error;
-        }
-        if (mounted) setReady(true);
+        await supabase.auth.getSession();
       } catch (e: any) {
         setError(e?.message ?? "Failed to init session");
+      } finally {
+        if (mounted) setReady(true);
       }
     })();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      if (!mounted) return;
+      setReady(true);
+    });
     return () => {
       mounted = false;
+      sub?.subscription.unsubscribe();
     };
   }, []);
 
