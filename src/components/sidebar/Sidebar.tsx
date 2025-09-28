@@ -147,13 +147,7 @@ export function Sidebar() {
       </div>
 
       <div className={styles.header}>Projects</div>
-      <div
-        style={{
-          padding: "0 8px",
-          overflowY: "auto",
-          height: "calc(100vh - 32px - 64px)",
-        }}
-      >
+      <div className={styles.scrollArea}>
         <Menu
           mode="inline"
           selectable
