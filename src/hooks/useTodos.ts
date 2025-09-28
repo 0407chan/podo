@@ -382,7 +382,7 @@ export function useInfiniteTodosByWeek(projectId: string | undefined) {
       const endDate = pageParam
         ? (pageParam as string)
         : formatDate(new Date());
-      const startDate = addDays(endDate, -6);
+      const startDate = addDays(endDate, -30);
       const { data, error } = await supabase
         .from("todos")
         .select("*")
