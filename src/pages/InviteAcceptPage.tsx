@@ -8,7 +8,7 @@ export function InviteAcceptPage() {
   const [params] = useSearchParams();
   const token = params.get("token");
   const navigate = useNavigate();
-  const { mutateAsync: accept, isPending } = useAcceptInvite();
+  const { mutateAsync: accept } = useAcceptInvite();
   const [error, setError] = useState<string | null>(null);
 
   const loggedIn = useMemo(() => {
@@ -28,7 +28,7 @@ export function InviteAcceptPage() {
         }
         const isAuthed = await loggedIn;
         if (!isAuthed) {
-          const { data, error } = await supabase.auth.signInWithOAuth({
+          const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
               redirectTo: window.location.href,
